@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Half Step Down Setlist</title>
+<meta name="theme-color" content="#111318">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Setlist">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one stage-dark column. Sticky header (name, Songs/Setlists switch, view tools), then the song list or a gig's setlist with retune dividers; bottom sheets for editing and picking songs. Deliberately single dark theme for use on stage. */
+:root{
+  color-scheme: dark;
+  --bg:#111318; --surface:#191c23; --surface-2:#20242d; --line:#2b303b;
+  --fg:#eceef2; --muted:#8c94a3; --accent:#f2b544; --accent-ink:#1a1408;
+  --danger:#ff6b5e;
+  --t-e:#4fc7b2; --t-dropd:#6fa8ff; --t-eb:#b58cff; --t-dropdb:#ff8d6e;
+  --font-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --font-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--fg)}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+body{font-family:var(--font-body);font-size:16px;line-height:1.4;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 96px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-block:14px 12px;display:grid;gap:12px}
+.titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--font-display);font-weight:700;font-size:30px;letter-spacing:.01em;margin:0;text-transform:uppercase;line-height:1}
+h1 span{color:var(--accent)}
+.stats{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{color:var(--fg);font-weight:600}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:none;border:0;padding:8px 16px;font-size:15px;color:var(--muted);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--fg)}
+.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--danger)}
+.spacer{flex:1}
+.syncchip{display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:500;color:var(--muted)}
+.syncchip .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.syncchip.ok .dot{background:var(--t-e)} .syncchip.syncing .dot{background:var(--accent)} .syncchip.bad .dot{background:var(--danger)} .syncchip.bad{color:var(--danger)}
+.titleright{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search{flex:1 1 180px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:16px}
+select.sort{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
+
+ol.list,ul.list{list-style:none;margin:0;padding:0}
+li.song{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+li.song.lib{grid-template-columns:1fr auto}
+.num{font-family:var(--font-display);font-size:24px;font-weight:600;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.main{min-width:0;display:grid;gap:4px;text-align:left;background:none;border:0;padding:0}
+.name{font-family:var(--font-display);font-size:22px;font-weight:600;line-height:1.1;letter-spacing:.01em}
+.meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid currentColor;line-height:1.5;white-space:nowrap}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.t-E{color:var(--t-e)} .t-DropD{color:var(--t-dropd)} .t-Eb{color:var(--t-eb)} .t-DropDb{color:var(--t-dropdb)} .t-other{color:var(--muted)}
+.drum{font-family:var(--font-mono);font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--fg);color:var(--bg)}
+.og{font-size:13px}
+.insets{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.moves{display:flex;gap:4px}
+.moves button{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:16px;color:var(--muted)}
+.moves button:disabled{opacity:.3;cursor:default}
+.moves button.x{font-size:20px;line-height:1}
+li.retune{display:flex;align-items:center;gap:10px;padding:8px 0 8px 56px;font-size:13px;font-weight:600;color:var(--accent);border-bottom:1px solid var(--line);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 10%,transparent),transparent 70%)}
+li.retune.soft{color:var(--muted);background:none;font-weight:500}
+li.retune svg{flex:none}
+
+/* Setlist index */
+li.setcard{border-bottom:1px solid var(--line)}
+li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;text-align:left;background:none;border:0;padding:16px 0}
+.setcard .sname{font-family:var(--font-display);font-size:24px;font-weight:600;line-height:1.1}
+.setcard .sdate{font-size:14px;color:var(--muted)}
+.setcard .scount{grid-row:span 2;font-size:14px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.setcard .scount b{display:block;font-family:var(--font-display);font-size:26px;color:var(--fg);font-weight:600;line-height:1}
+
+/* Setlist detail heading */
+.sethead{display:grid;grid-template-columns:1fr auto;gap:10px;padding-block:16px 8px;align-items:end}
+.sethead input{background:none;border:0;border-bottom:1px dashed var(--line);border-radius:0;padding:4px 0;min-width:0}
+.sethead #s-name{font-family:var(--font-display);font-size:30px;font-weight:700;text-transform:uppercase;letter-spacing:.01em;width:100%}
+.sethead #s-date{font-size:15px;color:var(--muted)}
+@media (max-width:480px){.sethead{grid-template-columns:1fr}}
+
+.empty{padding:48px 0;color:var(--muted);text-align:center;display:grid;gap:14px;justify-items:center}
+.empty p{margin:0;max-width:34ch}
+
+/* Stage view */
+.stage{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sbar,.sfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-bottom:1px solid var(--line)}
+.sfoot{border-bottom:0;border-top:1px solid var(--line)}
+.sinfo{flex:1 1 220px;min-width:0;display:grid;gap:2px}
+.spos{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stitle{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.05;text-transform:uppercase;letter-spacing:.01em}
+.sctl{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sctl .btn{padding:8px 12px;min-height:40px}
+.btn[aria-pressed="true"]{background:var(--surface-2);border-color:var(--accent);color:var(--accent)}
+.speed{font-family:var(--font-mono);font-size:13px;color:var(--muted);min-width:2ch;text-align:center}
+.sbody{overflow:auto;-webkit-overflow-scrolling:touch;padding-block:20px 40vh;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.chart{max-width:900px;margin:0 auto;font-size:var(--chart-size,24px);line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere}
+.chart.mono{font-family:var(--font-mono);font-size:calc(var(--chart-size,24px) * .82);white-space:pre;overflow-x:auto}
+.chart .cl{color:var(--accent);font-weight:600}
+.chart .ic{color:var(--accent);font-family:var(--font-mono);font-weight:600;font-size:.8em;vertical-align:.35em;margin-inline:1px}
+.chart .sec{font-family:var(--font-display);font-size:.7em;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.9em}
+.chart .gap{height:.7em}
+.snone{max-width:44ch;margin:10vh auto 0;text-align:center;color:var(--muted);display:grid;gap:14px;justify-items:center}
+.snext{flex:1;min-width:0;text-align:center;font-size:15px;color:var(--muted)}
+.snext b{color:var(--fg)}
+.snext .rt{color:var(--accent);font-weight:600}
+.sfoot .btn{min-height:48px;padding-inline:20px;font-size:16px;font-weight:600}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.links a{color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+#e-chart{font-family:var(--font-mono);font-size:14px;min-height:220px;white-space:pre;overflow-x:auto}
+
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:640px;max-height:92%;overflow:auto;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;padding:20px max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));display:grid;gap:16px}
+.sheet h2{font-family:var(--font-display);font-size:26px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:.01em}
+.sheet.picker{grid-template-rows:auto auto minmax(0,1fr) auto;height:92%;overflow:hidden}
+.pickwrap{overflow:auto;min-height:0;margin-inline:-4px;padding-inline:4px}
+ul.pick li label{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+ul.pick input{width:22px;height:22px;accent-color:var(--accent)}
+ul.pick .pname{font-weight:600;font-size:17px}
+ul.pick .partist{font-size:14px;color:var(--muted)}
+ul.pick li.in{opacity:.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:480px){.grid2{grid-template-columns:1fr}}
+label.f{display:grid;gap:5px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:0}
+label.f input,label.f textarea{font-size:16px;letter-spacing:0;text-transform:none;font-weight:400;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:80px}
+fieldset{border:1px solid var(--line);border-radius:12px;padding:14px;margin:0;display:grid;gap:12px}
+legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:0 6px;color:var(--fg)}
+.toggle{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500}
+.toggle input{width:22px;height:22px;accent-color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14px;font-weight:500;z-index:60;display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px)}
+.toast button{background:none;border:0;color:var(--bg);font-weight:700;text-decoration:underline;padding:0}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="titlerow">
+      <h1>Half Step <span>Down</span></h1>
+      <div class="titleright">
+        <button class="syncchip" id="syncchip" aria-label="Sync settings"><span class="dot"></span><span id="synctext">Sync off</span></button>
+        <div class="seg" role="group" aria-label="View">
+          <button id="v-songs" aria-pressed="true">Songs</button>
+          <button id="v-sets" aria-pressed="false">Setlists</button>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar" id="toolbar"></div>
+    <div class="stats" id="stats"></div>
+  </header>
+  <div id="body"></div>
+</div>
+
+<div class="scrim" id="editor" hidden>
+  <form class="sheet" id="edit-form">
+    <h2 id="edit-title">Edit song</h2>
+    <div class="grid2">
+      <label class="f">Song<input id="e-title" required></label>
+      <label class="f">Artist<input id="e-artist"></label>
+      <label class="f">Tuning<input id="e-tuning" placeholder="Eb, Drop Db, Capo 2…"></label>
+      <label class="f">Original tuning<input id="e-og"></label>
+    </div>
+    <fieldset>
+      <legend>Drums</legend>
+      <label class="toggle"><input type="checkbox" id="e-drums"> Use HeadRush kick on this song</label>
+      <div class="grid2">
+        <label class="f">BPM<input id="e-bpm" type="number" inputmode="numeric" min="40" max="250" placeholder="e.g. 84"></label>
+        <label class="f">Rig #<input id="e-rig" type="number" inputmode="numeric" min="1" max="999" placeholder="Loads by Program Change"></label>
+      </div>
+      <label class="f">Drum note<input id="e-dnote" placeholder="Kick only, 4 on the floor"></label>
+    </fieldset>
+    <fieldset>
+      <legend>Lyrics &amp; chords</legend>
+      <div class="links"><a id="e-find-chords" href="#" target="_blank" rel="noopener">Find chords on Ultimate Guitar ↗</a><a id="e-find-lyrics" href="#" target="_blank" rel="noopener">Find lyrics ↗</a></div>
+      <label class="f">Chart<textarea id="e-chart" spellcheck="false" placeholder="Paste lyrics, or a chord chart with chords on the line above the words.&#10;[Verse], [Chorus] lines become section labels. ChordPro [G] chords work too."></textarea></label>
+      <label class="toggle"><input type="checkbox" id="e-chords"> Show chords on stage</label>
+    </fieldset>
+    <label class="f">Notes<textarea id="e-notes"></textarea></label>
+    <div class="actions">
+      <button type="submit" class="btn primary">Save</button>
+      <button type="button" class="btn" id="e-cancel">Cancel</button>
+      <button type="button" class="btn" id="e-stage">Save &amp; view on stage</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn danger" id="e-delete">Delete song</button>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="picker" hidden>
+  <div class="sheet picker">
+    <h2>Add songs</h2>
+    <input class="search" id="p-q" type="search" placeholder="Search songs or artists" autocomplete="off">
+    <div class="pickwrap"><ul class="list pick" id="p-list"></ul></div>
+    <div class="actions">
+      <button class="btn primary" id="p-add" disabled>Add songs</button>
+      <button class="btn" id="p-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="backup" hidden>
+  <div class="sheet">
+    <h2>Backup &amp; import</h2>
+    <p class="hint">Copy saves everything: your songs, BPMs, rig numbers and every setlist. Paste a backup below and tap Load to restore it. You can also load a CSV exported from the Google Sheet; only Ready and WIP rows come in, and drum settings already entered are kept.</p>
+    <label class="f">Data<textarea id="b-text" rows="8" spellcheck="false"></textarea></label>
+    <div class="actions">
+      <button class="btn primary" id="b-file-save">Save backup file</button>
+      <button class="btn" id="b-copy">Copy backup</button>
+      <button class="btn" id="b-load">Load pasted data</button>
+      <label class="btn" for="b-file">Load file…</label>
+      <input type="file" id="b-file" accept=".json,.csv,text/csv,application/json" hidden>
+      <span class="spacer"></span>
+      <button class="btn" id="b-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="settings" hidden>
+  <form class="sheet" id="g-form">
+    <h2>Sync</h2>
+    <p class="hint">Everything saves on this device first, so the app works with no signal. When you're online it also syncs with your private GitHub repo, which keeps the iPad and your computer matched. Each device needs the access key once.</p>
+    <label class="f">Access key<input id="g-token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></label>
+    <label class="f">Data repo<input id="g-repo" autocapitalize="off" spellcheck="false"></label>
+    <p class="hint" id="g-status"></p>
+    <div class="actions">
+      <button type="submit" class="btn primary">Save &amp; sync now</button>
+      <button type="button" class="btn" id="g-close">Close</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn danger" id="g-remove">Remove key</button>
+    </div>
+    <p class="hint" id="g-version"></p>
+  </form>
+</div>
+
+<div class="stage" id="stage" hidden>
+  <div class="sbar">
+    <button class="btn" id="st-close" aria-label="Close stage view">✕</button>
+    <div class="sinfo">
+      <div class="spos" id="st-pos"></div>
+      <div class="stitle" id="st-title"></div>
+      <div class="meta" id="st-meta"></div>
+    </div>
+    <div class="sctl">
+      <button class="btn" id="st-smaller" aria-label="Smaller text">A−</button>
+      <button class="btn" id="st-bigger" aria-label="Bigger text">A+</button>
+      <button class="btn" id="st-chords" aria-pressed="true">Chords</button>
+      <button class="btn" id="st-slower" aria-label="Scroll slower">−</button>
+      <button class="btn" id="st-scroll" aria-pressed="false">Scroll</button>
+      <span class="speed" id="st-speed" title="Scroll speed"></span>
+      <button class="btn" id="st-faster" aria-label="Scroll faster">+</button>
+      <button class="btn" id="st-edit">Edit</button>
+    </div>
+  </div>
+  <div class="sbody" id="st-body"></div>
+  <div class="sfoot">
+    <button class="btn" id="st-prev">‹ Prev</button>
+    <div class="snext" id="st-next"></div>
+    <button class="btn primary" id="st-nextbtn">Next ›</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+const KEY='hsd-setlist-v2', OLD='hsd-setlist-v1';
+const SEED=[
+["Heart-Shaped Box","Nirvana","Drop Db",""],["Nutshell","Alice In Chains","Eb",""],["Fine Again","Seether","Eb",""],
+["Interstate Love Song","Stone Temple Pilots","E",""],["Let Her Cry","Hootie & The Blowfish","Eb",""],["Hole Hearted","Extreme","Eb",""],
+["The Middle","Jimmy Eat World","Drop Db*","Drop D"],["Kryptonite","3 Doors Down","Eb",""],["Bartender Song","Rehab","E",""],
+["Californication","RHCP","E",""],["Glycerine","Bush","Eb",""],["Higher","Creed","Drop D",""],
+["On the Way Down","Ryan Cabrera","Capo 2",""],["Collide","Howie Day","Capo 4",""],["Say It Ain't So","Weezer","Eb",""],
+["Through Glass","Stone Sour","Eb",""],["Everlong","Foo Fighters","Drop Db*","Drop D"],["In Bloom","Nirvana","Eb",""],
+["Inside Out","Eve 6","E",""],["Breakdown","Tantric","Drop Db",""],["Far Away","Nickelback","Drop Db",""],
+["Aerials","System of A Down","Drop Db*",""],["Come As You Are","Nirvana","Eb",""],["Snuff","Slipknot","Eb","Db"],
+["Swing Life Away","Rise Against","Eb",""],["Bittersweet Memories","BFMV","Eb*","Drop C"],["Landslide","Fleetwood Mac","Capo 3",""],
+["Every Rose","Poison","Eb",""],["Broken","Seether","Eb",""],["Here Without You","3 Doors Down","Eb",""],
+["Diary of Jane","Breaking Benjamin","Eb*","Drop B","Sheet note: \"you can capo…\" (cut off in the screenshot)"],
+["Driven Under","Seether","Eb",""],["How To Save A Life","The Fray","Capo 4",""],["Cumbersome","Seven Mary Three","E",""],
+["Shine","Collective Soul","Drop Db",""],["Plush","Stone Temple Pilots","Eb*","E"],["Black Hole Sun","Soundgarden","Drop Db*","Drop D"],
+["Tomorrow","Silverchair","Eb*","E"],["Man Who Sold the World","Nirvana","Eb",""],["Bother","Stone Sour","Eb",""]
+];
+let uid=0;const mkId=p=>(p||'s')+Date.now().toString(36)+(uid++).toString(36);
+const clean=s=>{const {status,...rest}=s;return rest;};
+function seed(){return {v:3,deleted:{},songs:SEED.map((r,i)=>({id:'seed'+i,title:r[0],artist:r[1],tuning:r[2],og:r[3],notes:r[4]||'',drums:false,bpm:null,rig:null,dnote:''})),sets:[]};}
+function migrate(d){const m=new Map(d.songs.map(s=>[s.id,s]));const songs=d.order.map(id=>m.get(id)).filter(Boolean);d.songs.forEach(s=>{if(!songs.includes(s))songs.push(s);});return {v:2,songs:songs.map(clean),sets:[]};}
+function load(){
+  try{
+    let raw=localStorage.getItem(KEY);
+    if(raw){const d=JSON.parse(raw);if(d&&Array.isArray(d.songs)&&Array.isArray(d.sets)){return normalize(d);}}
+    raw=localStorage.getItem(OLD);
+    if(raw){const d=JSON.parse(raw);if(d&&Array.isArray(d.songs)&&Array.isArray(d.order))return normalize(d);}
+  }catch(e){}
+  return seed();
+}
+const APP_VERSION='1.0.0';
+const touch=o=>{if(o)o.u=Date.now();return o;};
+function normalize(d){
+  if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
+  if(!d||!Array.isArray(d.songs)||!Array.isArray(d.sets)) throw new Error('bad data');
+  return {v:3,songs:d.songs.map(clean),sets:d.sets,deleted:d.deleted&&typeof d.deleted==='object'?d.deleted:{}};
+}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function save(){saveLocal();scheduleSync();}
+let state=load();
+const ui={view:'songs',set:null,q:'',sort:'sheet'};
+try{const u=JSON.parse(localStorage.getItem('hsd-ui')||'null');if(u){ui.view=u.view==='sets'?'sets':'songs';ui.set=u.set||null;ui.sort=u.sort||'sheet';}}catch(e){}
+const saveUi=()=>{try{localStorage.setItem('hsd-ui',JSON.stringify({view:ui.view,set:ui.set,sort:ui.sort}));}catch(e){}};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const song=id=>state.songs.find(s=>s.id===id);
+const curSet=()=>state.sets.find(s=>s.id===ui.set)||null;
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const fmtDate=d=>{if(!d)return 'No date';const x=new Date(d+'T12:00');return isNaN(x)?d:x.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});};
+
+// Tuning: base string tuning (what you physically retune to) plus capo
+function tune(t){
+  const raw=String(t||'').replace(/\*/g,'').trim();
+  const m=raw.match(/^capo\s*(\d+)/i);
+  if(m) return {base:'E',capo:+m[1],cls:'E'};
+  const k=raw.toLowerCase().replace(/\s+/g,' ').replace(/\(.*$/,'').trim();
+  const map={'e':['E','E'],'eb':['Eb','Eb'],'drop d':['Drop D','DropD'],'drop db':['Drop Db','DropDb']};
+  if(map[k]) return {base:map[k][0],capo:0,cls:map[k][1]};
+  return {base:k||'?',capo:0,cls:'other'};
+}
+const ORDER={'E':0,'Drop D':1,'Eb':2,'Drop Db':3};
+const tuneCmp=(a,b)=>{const ta=tune(a.tuning),tb=tune(b.tuning);return (ORDER[ta.base]??9)-(ORDER[tb.base]??9)||ta.capo-tb.capo;};
+function countRetunes(songs){let n=0,p=null;songs.forEach(s=>{const t=tune(s.tuning);if(p&&p.base!==t.base)n++;p=t;});return n;}
+
+const ICON='<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v3M8 11.5v3M3.4 3.4l2.1 2.1M10.5 10.5l2.1 2.1M1.5 8h3M11.5 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
+
+function metaHTML(s){
+  const t=tune(s.tuning);
+  const m=[`<span>${esc(s.artist)}</span>`,`<span class="chip t-${t.cls}"><span class="dot"></span>${esc(s.tuning||'—')}</span>`];
+  if(s.og) m.push(`<span class="og">orig. ${esc(s.og)}</span>`);
+  if(s.drums) m.push(`<span class="drum">KICK ${s.bpm?esc(s.bpm)+' BPM':'· set BPM'}${s.rig?' · RIG '+esc(s.rig):''}</span>`);
+  return m.join('');
+}
+
+/* ---------- Toolbar (rebuilt only when the view changes, so search keeps focus) ---------- */
+function renderToolbar(){
+  $('v-songs').setAttribute('aria-pressed',ui.view==='songs');
+  $('v-sets').setAttribute('aria-pressed',ui.view==='sets');
+  let h='';
+  if(ui.view==='songs'){
+    h=`<input class="search" id="q" type="search" placeholder="Search songs or artists" autocomplete="off" value="${esc(ui.q)}">
+      <select class="sort" id="sort" aria-label="Sort">
+        <option value="sheet">Sheet order</option><option value="az">A–Z</option><option value="artist">Artist</option><option value="tuning">Tuning</option>
+      </select>
+      <button class="btn" data-act="add-song">Add song</button>
+      <button class="btn" data-act="backup">Backup</button>`;
+  } else if(!curSet()){
+    h=`<button class="btn primary" data-act="new-set">New setlist</button><span class="spacer"></span><button class="btn" data-act="backup">Backup</button>`;
+  } else {
+    h=`<button class="btn" data-act="back">‹ Setlists</button>
+      <button class="btn primary" data-act="play">▶ Play set</button>
+      <button class="btn" data-act="pick">Add songs</button>
+      <button class="btn" data-act="group">Group by tuning</button>
+      <span class="spacer"></span>
+      <button class="btn" data-act="dup-set">Duplicate</button>
+      <button class="btn danger" data-act="del-set" id="del-set">Delete setlist</button>`;
+  }
+  $('toolbar').innerHTML=h;
+  if(ui.view==='songs'){
+    $('sort').value=ui.sort;
+    $('q').addEventListener('input',e=>{ui.q=e.target.value;renderBody();});
+    $('sort').addEventListener('change',e=>{ui.sort=e.target.value;saveUi();renderBody();});
+  }
+}
+
+/* ---------- Body ---------- */
+function renderSongs(){
+  const q=ui.q.trim().toLowerCase();
+  let list=state.songs.filter(s=>!q||s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q));
+  if(ui.sort==='az') list=list.slice().sort((a,b)=>a.title.localeCompare(b.title));
+  if(ui.sort==='artist') list=list.slice().sort((a,b)=>a.artist.localeCompare(b.artist)||a.title.localeCompare(b.title));
+  if(ui.sort==='tuning') list=list.slice().sort((a,b)=>tuneCmp(a,b)||a.title.localeCompare(b.title));
+  const inSets=id=>state.sets.filter(st=>st.ids.includes(id)).length;
+  $('body').innerHTML=list.length?`<ul class="list">${list.map(s=>{const n=inSets(s.id);return `<li class="song lib">
+      <button class="main" data-edit="${s.id}" aria-label="Edit ${esc(s.title)}"><span class="name">${esc(s.title)}</span><span class="meta">${metaHTML(s)}</span></button>
+      <span class="insets">${n?n+(n===1?' setlist':' setlists'):''}</span></li>`;}).join('')}</ul>`
+    :`<div class="empty"><p>No songs match “${esc(ui.q)}”.</p></div>`;
+  const nD=state.songs.filter(s=>s.drums).length;
+  $('stats').innerHTML=`<span><b>${state.songs.length}</b> songs</span><span><b>${nD}</b> with drums</span><span><b>${state.sets.length}</b> setlists</span>`;
+}
+function renderIndex(){
+  const sets=state.sets.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  $('body').innerHTML=sets.length?`<ul class="list">${sets.map(st=>{const songs=st.ids.map(song).filter(Boolean);return `<li class="setcard"><button data-open="${st.id}">
+      <span class="sname">${esc(st.name||'Untitled gig')}</span>
+      <span class="scount"><b>${songs.length}</b>songs</span>
+      <span class="sdate">${esc(fmtDate(st.date))} · ${countRetunes(songs)} retunes</span></button></li>`;}).join('')}</ul>`
+    :`<div class="empty"><p>No setlists yet. Make one for each gig, then pick its songs from your song list.</p><button class="btn primary" data-act="new-set">New setlist</button></div>`;
+  $('stats').innerHTML=`<span><b>${state.sets.length}</b> setlists</span>`;
+}
+function renderSet(){
+  const st=curSet();const songs=st.ids.map(song).filter(Boolean);
+  const out=[];let prev=null;
+  songs.forEach((s,i)=>{
+    const t=tune(s.tuning);
+    if(prev){
+      if(prev.base!==t.base) out.push(`<li class="retune">${ICON}Retune ${esc(prev.base)} → ${esc(t.base)}</li>`);
+      else if(prev.capo!==t.capo) out.push(`<li class="retune soft">${t.capo?'Capo '+t.capo:'Remove capo'}</li>`);
+    }
+    prev=t;
+    out.push(`<li class="song">
+      <div class="num">${i+1}</div>
+      <button class="main" data-stage="${i}" aria-label="Open ${esc(s.title)} on stage"><span class="name">${esc(s.title)}</span><span class="meta">${metaHTML(s)}</span></button>
+      <div class="moves">
+        <button data-up="${i}" aria-label="Move up" ${i===0?'disabled':''}>▲</button>
+        <button data-down="${i}" aria-label="Move down" ${i===songs.length-1?'disabled':''}>▼</button>
+        <button class="x" data-rm="${i}" aria-label="Remove from setlist">×</button>
+      </div></li>`);
+  });
+  $('body').innerHTML=`<div class="sethead">
+      <input id="s-name" value="${esc(st.name)}" placeholder="Gig name" aria-label="Setlist name">
+      <input id="s-date" type="date" value="${esc(st.date||'')}" aria-label="Gig date">
+    </div>`+(songs.length?`<ol class="list">${out.join('')}</ol>`
+    :`<div class="empty"><p>No songs in this setlist yet.</p><button class="btn primary" data-act="pick">Add songs</button></div>`);
+  $('s-name').addEventListener('input',e=>{st.name=e.target.value;touch(st);save();});
+  $('s-date').addEventListener('change',e=>{st.date=e.target.value;touch(st);save();});
+  const nD=songs.filter(s=>s.drums).length;
+  $('stats').innerHTML=`<span><b>${songs.length}</b> songs</span><span><b>${countRetunes(songs)}</b> retunes</span><span><b>${nD}</b> with drums</span>`;
+}
+function renderBody(){
+  if(ui.view==='songs') return renderSongs();
+  if(!curSet()) return renderIndex();
+  renderSet();
+}
+function go(view,set){ui.view=view;ui.set=set===undefined?ui.set:set;saveUi();renderToolbar();renderBody();window.scrollTo(0,0);}
+function commit(){save();renderBody();}
+
+function toast(msg,undoFn){
+  const t=$('toast');t.innerHTML=esc(msg)+(undoFn?' <button id="t-undo">Undo</button>':'');t.hidden=false;
+  if(undoFn) $('t-undo').onclick=()=>{undoFn();t.hidden=true;};
+  clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,undoFn?6000:2500);
+}
+const snap=()=>JSON.parse(JSON.stringify(state));
+const restore=s=>()=>{state=s;state.songs.forEach(touch);state.sets.forEach(touch);save();renderToolbar();renderBody();};
+
+$('v-songs').onclick=()=>go('songs');
+$('v-sets').onclick=()=>go('sets',null);
+
+let delSetArmed=false;
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.edit) return openEditor(b.dataset.edit);
+  if(b.dataset.open) return go('sets',b.dataset.open);
+  const st=curSet();
+  if(st&&b.dataset.stage!==undefined) return openStage(st.ids.slice(),+b.dataset.stage);
+  if(st&&(b.dataset.up||b.dataset.down)){
+    const i=+(b.dataset.up||b.dataset.down),j=b.dataset.up?i-1:i+1;
+    if(j<0||j>=st.ids.length)return;[st.ids[i],st.ids[j]]=[st.ids[j],st.ids[i]];touch(st);return commit();
+  }
+  if(st&&b.dataset.rm!==undefined){
+    const before=snap();const s=song(st.ids[+b.dataset.rm]);st.ids.splice(+b.dataset.rm,1);touch(st);commit();
+    return toast(`Removed ${s?s.title:'song'}`,restore(before));
+  }
+  const act=b.dataset.act;if(!act)return;
+  if(act!=='del-set') delSetArmed=false;
+  switch(act){
+    case 'add-song': return openEditor(null);
+    case 'backup': $('b-text').value=JSON.stringify(state,null,1);$('backup').hidden=false;return;
+    case 'new-set':{const s={id:mkId('set'),name:'',date:today(),ids:[],u:Date.now()};state.sets.push(s);save();go('sets',s.id);setTimeout(()=>{const n=$('s-name');n&&n.focus();},50);return;}
+    case 'back': return go('sets',null);
+    case 'pick': return openPicker();
+    case 'play': if(!st.ids.length) return toast('Add songs to this setlist first.'); return openStage(st.ids.slice(),0);
+    case 'group':{const before=snap();const idx=new Map(st.ids.map((id,i)=>[id,i]));
+      st.ids.sort((a,b)=>tuneCmp(song(a),song(b))||idx.get(a)-idx.get(b));touch(st);commit();return toast('Grouped by tuning',restore(before));}
+    case 'dup-set':{const s={id:mkId('set'),name:(st.name||'Untitled gig')+' (copy)',date:st.date,ids:st.ids.slice(),u:Date.now()};state.sets.push(s);save();go('sets',s.id);return toast('Setlist duplicated');}
+    case 'del-set':{
+      if(!delSetArmed){delSetArmed=true;b.textContent='Tap again to delete';return;}
+      delSetArmed=false;const before=snap();state.deleted[st.id]=Date.now();state.sets=state.sets.filter(x=>x.id!==st.id);save();go('sets',null);return toast('Setlist deleted',restore(before));}
+  }
+});
+
+/* ---------- Song editor ---------- */
+let editing=null,delArmed=false;
+function openEditor(id){
+  editing=id;delArmed=false;$('e-delete').textContent='Delete song';
+  const s=id?song(id):{title:'',artist:'',tuning:'',og:'',drums:false,bpm:null,rig:null,dnote:'',notes:''};
+  $('edit-title').textContent=id?'Edit song':'Add song';
+  $('e-title').value=s.title;$('e-artist').value=s.artist;$('e-tuning').value=s.tuning;$('e-og').value=s.og;
+  $('e-drums').checked=!!s.drums;$('e-bpm').value=s.bpm??'';$('e-rig').value=s.rig??'';
+  $('e-dnote').value=s.dnote||'';$('e-notes').value=s.notes||'';
+  $('e-chart').value=s.chart||'';$('e-chords').checked=s.chords!==false;
+  updateLinks();
+  $('e-delete').hidden=!id;$('editor').hidden=false;
+}
+function updateLinks(){
+  const q=($('e-title').value+' '+$('e-artist').value).trim();
+  $('e-find-chords').href='https://www.ultimate-guitar.com/search.php?search_type=title&value='+encodeURIComponent(q);
+  $('e-find-lyrics').href='https://www.google.com/search?q='+encodeURIComponent(q+' lyrics');
+}
+$('e-title').addEventListener('input',updateLinks);$('e-artist').addEventListener('input',updateLinks);
+const closeEditor=()=>{$('editor').hidden=true;editing=null;if(pendingReload&&$('stage').hidden)location.reload();};
+$('e-cancel').onclick=closeEditor;
+$('editor').addEventListener('click',e=>{if(e.target.id==='editor')closeEditor();});
+function saveEditor(){
+  const num=v=>{const n=parseInt(v,10);return Number.isFinite(n)?n:null;};
+  const data={title:$('e-title').value.trim(),artist:$('e-artist').value.trim(),tuning:$('e-tuning').value.trim(),og:$('e-og').value.trim(),
+    drums:$('e-drums').checked,bpm:num($('e-bpm').value),rig:num($('e-rig').value),dnote:$('e-dnote').value.trim(),notes:$('e-notes').value,
+    chart:$('e-chart').value.replace(/\s+$/,''),chords:$('e-chords').checked};
+  if(!data.title){$('e-title').focus();return null;}
+  data.u=Date.now();
+  let id=editing;
+  if(id) Object.assign(song(id),data);
+  else{id=mkId();state.songs.push({id,...data});}
+  closeEditor();commit();
+  if(!$('stage').hidden) renderStage();
+  return id;
+}
+$('edit-form').addEventListener('submit',e=>{e.preventDefault();if(saveEditor())toast('Saved');});
+$('e-stage').onclick=()=>{const id=saveEditor();if(id&&$('stage').hidden)openStage([id],0);};
+
+/* ---------- Stage view ---------- */
+const CHORD=/^\(?([A-G](#|b)?(m|maj|min|dim|aug|sus|add|M)?\d*(sus\d*|add\d*|maj\d*|b\d+|#\d+)*(\/[A-G](#|b)?)?)\)?$/;
+const isChordTok=t=>CHORD.test(t)||/^(N\.?C\.?|x\d+|\(x\d+\)|\||-+|\/)$/i.test(t);
+const isChordLine=l=>{const toks=l.trim().split(/\s+/).filter(Boolean);return toks.length>0&&toks.every(isChordTok)&&toks.some(t=>CHORD.test(t));};
+function chartHTML(text,showChords){
+  const lines=String(text||'').replace(/\r/g,'').replace(/\t/g,'    ').split('\n');
+  const hasChordLines=lines.some(isChordLine);
+  const out=[];
+  lines.forEach(line=>{
+    const sec=line.match(/^\s*\[([^\]]+)\]\s*$/);
+    if(sec&&!CHORD.test(sec[1].trim())){out.push(`<div class="sec">${esc(sec[1])}</div>`);return;}
+    if(!line.trim()){out.push('<div class="gap"></div>');return;}
+    if(isChordLine(line)){if(showChords) out.push(`<div class="cl">${esc(line)}</div>`);return;}
+    let h=esc(line).replace(/\[([^\]]+)\]/g,(m,c)=>CHORD.test(c.trim())?(showChords?`<b class="ic">${c}</b>`:''):m);
+    if(!showChords) h=h.replace(/ {2,}/g,' ');
+    out.push(`<div class="ll">${h}</div>`);
+  });
+  return {html:out.join(''),mono:showChords&&hasChordLines};
+}
+const stg={ids:[],i:0,scrolling:false,speed:3,raf:0,lock:null,chordsOverride:null};
+try{const v=JSON.parse(localStorage.getItem('hsd-stage')||'null');if(v){stg.speed=v.speed||3;stg.size=v.size||24;}}catch(e){}
+stg.size=stg.size||24;
+const saveStg=()=>{try{localStorage.setItem('hsd-stage',JSON.stringify({speed:stg.speed,size:stg.size}));}catch(e){}};
+function openStage(ids,i){
+  stg.ids=ids.filter(song);if(!stg.ids.length)return;stg.i=Math.max(0,Math.min(i,stg.ids.length-1));
+  $('stage').hidden=false;document.body.style.overflow='hidden';renderStage();
+  try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>stg.lock=l,()=>{});}catch(e){}
+}
+function closeStage(){stopScroll();$('stage').hidden=true;document.body.style.overflow='';if(pendingReload){location.reload();return;}try{stg.lock&&stg.lock.release();}catch(e){}stg.lock=null;renderBody();}
+function renderStage(){
+  const s=song(stg.ids[stg.i]);if(!s){closeStage();return;}
+  stopScroll();stg.chordsOverride=null;
+  const n=stg.ids.length;
+  $('st-pos').textContent=n>1?`Song ${stg.i+1} of ${n}`:'Song';
+  $('st-title').textContent=s.title;
+  $('st-meta').innerHTML=metaHTML(s);
+  drawChart();
+  const nx=song(stg.ids[stg.i+1]);
+  if(nx){const a=tune(s.tuning),b=tune(nx.tuning);
+    const rt=a.base!==b.base?` <span class="rt">· Retune to ${esc(b.base)}</span>`:(a.capo!==b.capo?` <span class="rt">· ${b.capo?'Capo '+b.capo:'Remove capo'}</span>`:'');
+    $('st-next').innerHTML=`Next: <b>${esc(nx.title)}</b>${rt}`;
+  } else $('st-next').textContent=n>1?'Last song':'';
+  $('st-prev').disabled=stg.i===0;$('st-nextbtn').disabled=stg.i>=n-1;
+  $('st-speed').textContent=stg.speed;
+  $('st-body').scrollTop=0;
+}
+function drawChart(){
+  const s=song(stg.ids[stg.i]);
+  const show=stg.chordsOverride??(s.chords!==false);
+  $('st-chords').setAttribute('aria-pressed',show);
+  if(!s.chart||!s.chart.trim()){
+    $('st-chords').hidden=true;
+    const q=encodeURIComponent((s.title+' '+s.artist).trim());
+    $('st-body').innerHTML=`<div class="snone"><p>No lyrics for this song yet. Tap Edit and paste lyrics or a chord chart.</p>
+      <div class="links"><a href="https://www.ultimate-guitar.com/search.php?search_type=title&value=${q}" target="_blank" rel="noopener">Find chords ↗</a><a href="https://www.google.com/search?q=${q}%20lyrics" target="_blank" rel="noopener">Find lyrics ↗</a></div></div>`;
+    return;
+  }
+  const c=chartHTML(s.chart,show);
+  $('st-chords').hidden=!/\S/.test(s.chart)||!(s.chart.split('\n').some(isChordLine)||/\[[A-G][^\]]*\]/.test(s.chart));
+  $('st-body').innerHTML=`<div class="chart${c.mono?' mono':''}" style="--chart-size:${stg.size}px">${c.html}</div>`;
+}
+function scrollTick(t0){
+  let last=t0;
+  const step=t=>{if(!stg.scrolling)return;const dt=(t-last)/1000;last=t;$('st-body').scrollTop+=stg.speed*9*dt*(stg.size/24);
+    const b=$('st-body');if(b.scrollTop+b.clientHeight>=b.scrollHeight-2){stopScroll();return;}stg.raf=requestAnimationFrame(step);};
+  stg.raf=requestAnimationFrame(step);
+}
+function startScroll(){stg.scrolling=true;$('st-scroll').setAttribute('aria-pressed','true');$('st-scroll').textContent='Pause';scrollTick(performance.now());}
+function stopScroll(){stg.scrolling=false;cancelAnimationFrame(stg.raf);$('st-scroll').setAttribute('aria-pressed','false');$('st-scroll').textContent='Scroll';}
+$('st-close').onclick=closeStage;
+$('st-prev').onclick=()=>{if(stg.i>0){stg.i--;renderStage();}};
+$('st-nextbtn').onclick=()=>{if(stg.i<stg.ids.length-1){stg.i++;renderStage();}};
+$('st-scroll').onclick=()=>stg.scrolling?stopScroll():startScroll();
+$('st-slower').onclick=()=>{stg.speed=Math.max(1,stg.speed-1);$('st-speed').textContent=stg.speed;saveStg();};
+$('st-faster').onclick=()=>{stg.speed=Math.min(15,stg.speed+1);$('st-speed').textContent=stg.speed;saveStg();};
+$('st-smaller').onclick=()=>{stg.size=Math.max(14,stg.size-2);saveStg();drawChart();};
+$('st-bigger').onclick=()=>{stg.size=Math.min(56,stg.size+2);saveStg();drawChart();};
+$('st-chords').onclick=()=>{const s=song(stg.ids[stg.i]);stg.chordsOverride=!(stg.chordsOverride??(s.chords!==false));drawChart();};
+$('st-edit').onclick=()=>{stopScroll();openEditor(stg.ids[stg.i]);};
+$('st-body').addEventListener('pointerdown',()=>{if(stg.scrolling)stopScroll();});
+document.addEventListener('keydown',e=>{
+  if($('stage').hidden||!$('editor').hidden||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+  const b=$('st-body'),page=b.clientHeight*0.6;
+  if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();b.scrollBy({top:page,behavior:'smooth'});}
+  else if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();b.scrollBy({top:-page,behavior:'smooth'});}
+  else if(e.key==='ArrowRight'){$('st-nextbtn').click();}
+  else if(e.key==='ArrowLeft'){$('st-prev').click();}
+  else if(e.key==='Escape'){closeStage();}
+});
+$('e-delete').onclick=()=>{
+  if(!delArmed){const n=state.sets.filter(st=>st.ids.includes(editing)).length;delArmed=true;
+    $('e-delete').textContent=n?`Tap again — removes it from ${n} setlist${n>1?'s':''}`:'Tap again to delete';return;}
+  const before=snap();
+  state.deleted[editing]=Date.now();state.songs=state.songs.filter(s=>s.id!==editing);state.sets.forEach(st=>{if(st.ids.includes(editing)){st.ids=st.ids.filter(id=>id!==editing);touch(st);}});
+  closeEditor();commit();toast('Song deleted',restore(before));
+};
+
+/* ---------- Song picker ---------- */
+let picked=new Set();
+function renderPicker(){
+  const st=curSet();const q=$('p-q').value.trim().toLowerCase();
+  const list=state.songs.filter(s=>!q||s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q));
+  $('p-list').innerHTML=list.map(s=>{const inSet=st.ids.includes(s.id);const t=tune(s.tuning);
+    return `<li class="${inSet?'in':''}"><label><input type="checkbox" data-pick="${s.id}" ${inSet||picked.has(s.id)?'checked':''} ${inSet?'disabled':''}>
+      <span><span class="pname">${esc(s.title)}</span><br><span class="partist">${esc(s.artist)}${inSet?' · already in set':''}</span></span>
+      <span class="chip t-${t.cls}"><span class="dot"></span>${esc(s.tuning||'—')}</span></label></li>`;}).join('')||'<li class="empty"><p>No songs match.</p></li>';
+  $('p-add').disabled=!picked.size;$('p-add').textContent=picked.size?`Add ${picked.size} song${picked.size>1?'s':''}`:'Add songs';
+}
+function openPicker(){picked=new Set();$('p-q').value='';$('picker').hidden=false;renderPicker();}
+$('p-q').addEventListener('input',renderPicker);
+$('p-list').addEventListener('change',e=>{const id=e.target.dataset.pick;if(!id)return;e.target.checked?picked.add(id):picked.delete(id);
+  $('p-add').disabled=!picked.size;$('p-add').textContent=picked.size?`Add ${picked.size} song${picked.size>1?'s':''}`:'Add songs';});
+$('p-cancel').onclick=()=>$('picker').hidden=true;
+$('picker').addEventListener('click',e=>{if(e.target.id==='picker')$('picker').hidden=true;});
+$('p-add').onclick=()=>{const st=curSet();const ids=state.songs.map(s=>s.id).filter(id=>picked.has(id));st.ids.push(...ids);touch(st);$('picker').hidden=true;commit();toast(`Added ${ids.length} song${ids.length>1?'s':''}`);};
+
+/* ---------- Backup / import ---------- */
+$('b-close').onclick=()=>$('backup').hidden=true;
+$('backup').addEventListener('click',e=>{if(e.target.id==='backup')$('backup').hidden=true;});
+$('b-copy').onclick=()=>{
+  const txt=JSON.stringify(state);$('b-text').value=txt;
+  navigator.clipboard.writeText(txt).then(()=>toast('Backup copied. Paste it into Notes or a file to keep it.'),()=>{$('b-text').select();toast('Text selected. Use Copy from the menu.');});
+};
+function parseCSV(txt){
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<txt.length;i++){const c=txt[i];
+    if(q){if(c==='"'){if(txt[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else if(c==='"')q=true; else if(c===','){row.push(f);f='';}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&txt[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f='';}
+    else f+=c;}
+  if(f||row.length){row.push(f);rows.push(row);}
+  return rows;
+}
+function importText(txt){
+  txt=txt.trim();if(!txt){toast('Paste a backup or CSV first.');return;}
+  const before=snap();
+  if(txt[0]==='{'){
+    try{const d=normalize(JSON.parse(txt));d.songs.forEach(touch);d.sets.forEach(touch);d.deleted={};state=d;}
+    catch(e){toast('That backup could not be read. Check it was copied in full.');return;}
+    $('backup').hidden=true;save();go(ui.view,null);toast('Backup loaded',restore(before));return;
+  }
+  const rows=parseCSV(txt);const h=(rows.shift()||[]).map(x=>x.trim().toLowerCase());
+  const col=n=>h.findIndex(x=>x.startsWith(n));
+  const ci={t:col('song'),a:col('artist'),tu:col('tuning'),og:col('og'),st:col('status')};
+  if(ci.t<0){toast('CSV needs a Song Title column.');return;}
+  let added=0,updated=0;
+  rows.forEach(r=>{
+    const title=(r[ci.t]||'').trim(),st=ci.st>=0?(r[ci.st]||'').trim().toLowerCase():'ready';
+    if(!title||(st!=='ready'&&st!=='wip'))return;
+    const data={title,artist:(r[ci.a]||'').trim(),tuning:ci.tu>=0?(r[ci.tu]||'').trim():'',og:ci.og>=0?(r[ci.og]||'').trim():''};
+    const ex=state.songs.find(s=>s.title.toLowerCase()===title.toLowerCase());
+    data.u=Date.now();
+    if(ex){Object.assign(ex,data);updated++;}
+    else{state.songs.push({id:mkId(),...data,drums:false,bpm:null,rig:null,dnote:'',notes:''});added++;}
+  });
+  $('backup').hidden=true;commit();toast(`${added} added, ${updated} updated`,restore(before));
+}
+$('b-load').onclick=()=>importText($('b-text').value);
+$('b-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>importText(String(r.result));r.readAsText(f);e.target.value='';};
+
+
+/* ---------- Backup file ---------- */
+$('b-file-save').onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='half-step-down-backup-'+today()+'.json';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+};
+
+/* ---------- Sync with the private GitHub data repo ---------- */
+const SYNC_KEY='hsd-sync';
+const sync={token:'',repo:'Shanedwyer312/setlist-data',path:'setlist.json',last:0,status:'off'};
+try{const c=JSON.parse(localStorage.getItem(SYNC_KEY)||'{}');['token','repo','path','last'].forEach(k=>{if(c[k])sync[k]=c[k];});}catch(e){}
+const saveSyncCfg=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify({token:sync.token,repo:sync.repo,path:sync.path,last:sync.last}));}catch(e){}};
+const b64enc=str=>{const b=new TextEncoder().encode(str);let bin='';for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin);};
+const b64dec=str=>{const bin=atob(str.replace(/\s/g,''));const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return new TextDecoder().decode(b);};
+const deviceName=()=>{const ua=navigator.userAgent;return /iPad/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document)?'iPad':/iPhone/.test(ua)?'iPhone':/Android/.test(ua)?'Android':/Windows/.test(ua)?'PC':'device';};
+function gh(method,body){
+  return fetch(`https://api.github.com/repos/${sync.repo}/contents/${encodeURIComponent(sync.path)}`,{
+    method,cache:'no-store',
+    headers:{Authorization:'Bearer '+sync.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},
+    body:body?JSON.stringify(body):undefined});
+}
+function mergeData(a,b){
+  const del=Object.assign({},a.deleted||{});
+  Object.entries(b.deleted||{}).forEach(([k,v])=>{del[k]=Math.max(del[k]||0,v);});
+  const mergeList=(la,lb)=>{const m=new Map(),order=[];
+    lb.forEach(x=>{m.set(x.id,x);order.push(x.id);});
+    la.forEach(x=>{const y=m.get(x.id);if(!y){m.set(x.id,x);order.push(x.id);}else if((x.u||0)>(y.u||0))m.set(x.id,x);});
+    return order.map(id=>m.get(id)).filter(x=>!(del[x.id]>=(x.u||0)));};
+  return {v:3,songs:mergeList(a.songs,b.songs),sets:mergeList(a.sets,b.sets),deleted:del};
+}
+let syncing=false,syncAgain=false,syncTimer=0;
+function scheduleSync(){if(!sync.token)return;clearTimeout(syncTimer);syncTimer=setTimeout(doSync,2500);}
+async function doSync(){
+  if(!sync.token){setStatus('off');return;}
+  if(!navigator.onLine){setStatus('offline');return;}
+  if(syncing){syncAgain=true;return;}
+  syncing=true;setStatus('syncing');
+  try{
+    let done=false;
+    for(let attempt=0;attempt<3&&!done;attempt++){
+      const r=await gh('GET');let remote=null,sha;
+      if(r.ok){const j=await r.json();sha=j.sha;remote=normalize(JSON.parse(b64dec(j.content)));}
+      else if(r.status!==404) throw new Error(r.status===401||r.status===403?'auth':r.status===404?'repo':'http');
+      const merged=remote?mergeData(state,remote):normalize(state);
+      const changed=JSON.stringify(merged)!==JSON.stringify(state);
+      state=merged;saveLocal();
+      if(changed) refreshAfterSync();
+      if(remote&&JSON.stringify(remote)===JSON.stringify(merged)){done=true;break;}
+      const p=await gh('PUT',{message:'Sync from '+deviceName(),content:b64enc(JSON.stringify(merged,null,1)),...(sha?{sha}:{})});
+      if(p.ok){done=true;break;}
+      if(p.status===409||p.status===422) continue;
+      throw new Error(p.status===401||p.status===403?'auth':p.status===404?'repo':'http');
+    }
+    if(!done) throw new Error('http');
+    sync.last=Date.now();saveSyncCfg();setStatus('ok');
+  }catch(e){setStatus(!navigator.onLine?'offline':(e.message==='auth'||e.message==='repo')?e.message:'error');}
+  finally{syncing=false;if(syncAgain){syncAgain=false;scheduleSync();}}
+}
+function refreshAfterSync(){
+  if(!$('stage').hidden||!$('editor').hidden||!$('picker').hidden) return;
+  if(ui.view==='sets'&&ui.set&&!curSet()) ui.set=null;
+  renderToolbar();renderBody();
+}
+const ago=t=>{if(!t)return 'never';const m=Math.round((Date.now()-t)/60000);if(m<1)return 'just now';if(m<60)return m+' min ago';const h=Math.round(m/60);if(h<24)return h+' hr ago';return new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'});};
+const STATUS={
+  off:['','Sync off','Sync is off. Your data is saved on this device only. Add an access key to keep your devices matched.'],
+  syncing:['syncing','Syncing…','Syncing now…'],
+  offline:['','Offline · saved here','No connection. Everything is saved on this device and will sync when you are back online.'],
+  auth:['bad','Sync key problem','GitHub did not accept the access key. It may have expired or been deleted. Make a new key and paste it here.'],
+  repo:['bad','Sync repo not found','Could not find the data repo. Check the name below and that the key has access to it.'],
+  error:['bad','Sync failed','Sync failed. Your data is safe on this device; it will try again automatically.'],
+};
+function setStatus(s){sync.status=s;renderSyncChip();}
+function renderSyncChip(){
+  const st=sync.status==='ok'?['ok','Synced '+ago(sync.last),'Synced '+ago(sync.last)+'. This device matches your data repo.']:STATUS[sync.status]||STATUS.off;
+  const chip=$('syncchip');chip.className='syncchip '+st[0];$('synctext').textContent=st[1];
+  $('g-status').textContent=st[2]+(sync.last&&sync.status!=='ok'?' Last synced '+ago(sync.last)+'.':'');
+}
+setInterval(renderSyncChip,30000);
+$('syncchip').onclick=()=>{$('g-token').value=sync.token;$('g-repo').value=sync.repo;$('g-version').textContent='App version '+APP_VERSION;renderSyncChip();$('settings').hidden=false;};
+$('g-close').onclick=()=>$('settings').hidden=true;
+$('settings').addEventListener('click',e=>{if(e.target.id==='settings')$('settings').hidden=true;});
+$('g-form').addEventListener('submit',e=>{e.preventDefault();sync.token=$('g-token').value.trim();sync.repo=$('g-repo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'')||'Shanedwyer312/setlist-data';saveSyncCfg();doSync();});
+$('g-remove').onclick=()=>{sync.token='';sync.last=0;saveSyncCfg();$('g-token').value='';setStatus('off');toast('Key removed from this device');};
+window.addEventListener('online',()=>doSync());
+window.addEventListener('offline',()=>setStatus('offline'));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')doSync();});
+
+/* ---------- Offline + auto-update ---------- */
+let pendingReload=false;
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  const hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!hadController||pendingReload)return;
+    if($('stage').hidden&&$('editor').hidden){location.reload();}
+    else{pendingReload=true;toast('App updated. It will refresh when you close this screen.');}
+  });
+}
+
+if(ui.view==='sets'&&ui.set&&!curSet()) ui.set=null;
+saveLocal();renderToolbar();renderBody();renderSyncChip();doSync();
+})();
+</script>
+</body>
+</html>
