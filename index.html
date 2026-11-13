@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Half Step Down Setlist</title>
+<title>Setlist</title>
 <meta name="theme-color" content="#111318">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -58,6 +58,8 @@ h1 span{color:var(--accent)}
 .syncchip{display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:500;color:var(--muted)}
 .syncchip .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .syncchip.ok .dot{background:var(--t-e)} .syncchip.syncing .dot{background:var(--accent)} .syncchip.bad .dot{background:var(--danger)} .syncchip.bad{color:var(--danger)}
+.demobar{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--fg);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:8px;padding:8px 12px;font-size:14px}
+.demobar a{color:var(--accent);font-weight:600}
 .titleright{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .search{flex:1 1 180px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:16px}
 select.sort{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
@@ -157,8 +159,9 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
 <body>
 <div class="wrap">
   <header class="top">
+    <div class="demobar" id="demobar" hidden>Demo with Half Step Down’s songs. Nothing you change here is saved. <a href="./">Start your own copy ›</a></div>
     <div class="titlerow">
-      <h1>Half Step <span>Down</span></h1>
+      <h1 id="band"></h1>
       <div class="titleright">
         <button class="syncchip" id="syncchip" aria-label="Sync settings"><span class="dot"></span><span id="synctext">Sync off</span></button>
         <div class="seg" role="group" aria-label="View">
@@ -239,13 +242,14 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
 
 <div class="scrim" id="settings" hidden>
   <form class="sheet" id="g-form">
-    <h2>Sync</h2>
+    <h2>Settings</h2>
+    <label class="f">Band name<input id="g-band" placeholder="Shown at the top of the app" autocomplete="off"></label>
     <p class="hint">Everything saves on this device first, so the app works with no signal. When you're online it also syncs with your private GitHub repo, which keeps the iPad and your computer matched. Each device needs the access key once.</p>
     <label class="f">Access key<input id="g-token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></label>
     <label class="f">Data repo<input id="g-repo" autocapitalize="off" spellcheck="false"></label>
     <p class="hint" id="g-status"></p>
     <div class="actions">
-      <button type="submit" class="btn primary">Save &amp; sync now</button>
+      <button type="submit" class="btn primary">Save</button>
       <button type="button" class="btn" id="g-close">Close</button>
       <span class="spacer"></span>
       <button type="button" class="btn danger" id="g-remove">Remove key</button>
@@ -285,8 +289,9 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
 
 <script>
 (function(){
-const KEY='hsd-setlist-v2', OLD='hsd-setlist-v1';
-const SEED=[
+const DEMO=new URLSearchParams(location.search).has('demo');
+const KEY=DEMO?'hsd-demo':'hsd-setlist-v2', OLD='hsd-setlist-v1';
+const DEMO_SONGS=[
 ["Heart-Shaped Box","Nirvana","Drop Db",""],["Nutshell","Alice In Chains","Eb",""],["Fine Again","Seether","Eb",""],
 ["Interstate Love Song","Stone Temple Pilots","E",""],["Let Her Cry","Hootie & The Blowfish","Eb",""],["Hole Hearted","Extreme","Eb",""],
 ["The Middle","Jimmy Eat World","Drop Db*","Drop D"],["Kryptonite","3 Doors Down","Eb",""],["Bartender Song","Rehab","E",""],
@@ -297,16 +302,44 @@ const SEED=[
 ["Aerials","System of A Down","Drop Db*",""],["Come As You Are","Nirvana","Eb",""],["Snuff","Slipknot","Eb","Db"],
 ["Swing Life Away","Rise Against","Eb",""],["Bittersweet Memories","BFMV","Eb*","Drop C"],["Landslide","Fleetwood Mac","Capo 3",""],
 ["Every Rose","Poison","Eb",""],["Broken","Seether","Eb",""],["Here Without You","3 Doors Down","Eb",""],
-["Diary of Jane","Breaking Benjamin","Eb*","Drop B","Sheet note: \"you can capo…\" (cut off in the screenshot)"],
-["Driven Under","Seether","Eb",""],["How To Save A Life","The Fray","Capo 4",""],["Cumbersome","Seven Mary Three","E",""],
-["Shine","Collective Soul","Drop Db",""],["Plush","Stone Temple Pilots","Eb*","E"],["Black Hole Sun","Soundgarden","Drop Db*","Drop D"],
-["Tomorrow","Silverchair","Eb*","E"],["Man Who Sold the World","Nirvana","Eb",""],["Bother","Stone Sour","Eb",""]
+["Diary of Jane","Breaking Benjamin","Eb*","Drop B"],["Driven Under","Seether","Eb",""],["How To Save A Life","The Fray","Capo 4",""],
+["Cumbersome","Seven Mary Three","E",""],["Shine","Collective Soul","Drop Db",""],["Plush","Stone Temple Pilots","Eb*","E"],
+["Black Hole Sun","Soundgarden","Drop Db*","Drop D"],["Tomorrow","Silverchair","Eb*","E"],["Man Who Sold the World","Nirvana","Eb",""],
+["Bother","Stone Sour","Eb",""]
 ];
+const DEMO_CHART=`[Verse]
+G                  D
+Load the car up, coil the cables tight
+Em                    C
+Setlist taped to the mic stand tonight
+G                 D
+Same old corner, same three-dollar beer
+Em               C
+Somebody shouts a song that isn't here
+
+[Chorus]
+G         D          Em       C
+Half a step down, let the low string ring
+G          D            C
+Nobody knows the words, but they all sing
+
+[Verse]
+G                D
+Kick drum steady underneath my feet
+Em                  C
+Counting four and holding to the beat`;
+function demoData(){
+  const songs=[{id:'demo-sample',title:'Sample Song',artist:'Demo chart (original words)',tuning:'Eb',og:'',drums:true,bpm:92,rig:1,dnote:'Kick only, 4 on the floor',notes:'Example chart so you can try the stage view.',chart:DEMO_CHART,chords:true,u:0}]
+    .concat(DEMO_SONGS.map((r,i)=>({id:'demo'+i,title:r[0],artist:r[1],tuning:r[2],og:r[3],drums:false,bpm:null,rig:null,dnote:'',notes:'',chart:'',chords:true,u:0})));
+  const pick=[0,1,9,4,12,2,15,8,24,21,18,7,17].map(i=>i===0?'demo-sample':'demo'+(i-1));
+  return {v:3,deleted:{},meta:{band:'Half Step Down',u:0},songs,sets:[{id:'demo-set',name:'Example gig',date:'',ids:pick,u:0}]};
+}
 let uid=0;const mkId=p=>(p||'s')+Date.now().toString(36)+(uid++).toString(36);
 const clean=s=>{const {status,...rest}=s;return rest;};
-function seed(){return {v:3,deleted:{},songs:SEED.map((r,i)=>({id:'seed'+i,title:r[0],artist:r[1],tuning:r[2],og:r[3],notes:r[4]||'',drums:false,bpm:null,rig:null,dnote:''})),sets:[]};}
+function seed(){return {v:3,deleted:{},songs:[],sets:[],meta:{band:'',u:0}};}
 function migrate(d){const m=new Map(d.songs.map(s=>[s.id,s]));const songs=d.order.map(id=>m.get(id)).filter(Boolean);d.songs.forEach(s=>{if(!songs.includes(s))songs.push(s);});return {v:2,songs:songs.map(clean),sets:[]};}
 function load(){
+  if(DEMO) return demoData();
   try{
     let raw=localStorage.getItem(KEY);
     if(raw){const d=JSON.parse(raw);if(d&&Array.isArray(d.songs)&&Array.isArray(d.sets)){return normalize(d);}}
@@ -315,19 +348,19 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.0.0';
+const APP_VERSION='1.2.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
   if(!d||!Array.isArray(d.songs)||!Array.isArray(d.sets)) throw new Error('bad data');
-  return {v:3,songs:d.songs.map(clean),sets:d.sets,deleted:d.deleted&&typeof d.deleted==='object'?d.deleted:{}};
+  return {v:3,songs:d.songs.map(clean),sets:d.sets,deleted:d.deleted&&typeof d.deleted==='object'?d.deleted:{},meta:d.meta&&typeof d.meta==='object'?d.meta:{band:d.songs.length?'Half Step Down':'',u:0}};
 }
-function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function saveLocal(){if(DEMO)return;try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 function save(){saveLocal();scheduleSync();}
 let state=load();
 const ui={view:'songs',set:null,q:'',sort:'sheet'};
-try{const u=JSON.parse(localStorage.getItem('hsd-ui')||'null');if(u){ui.view=u.view==='sets'?'sets':'songs';ui.set=u.set||null;ui.sort=u.sort||'sheet';}}catch(e){}
-const saveUi=()=>{try{localStorage.setItem('hsd-ui',JSON.stringify({view:ui.view,set:ui.set,sort:ui.sort}));}catch(e){}};
+try{const u=JSON.parse(localStorage.getItem(DEMO?'hsd-ui-demo':'hsd-ui')||'null');if(u){ui.view=u.view==='sets'?'sets':'songs';ui.set=u.set||null;ui.sort=u.sort||'sheet';}}catch(e){}
+const saveUi=()=>{try{localStorage.setItem(DEMO?'hsd-ui-demo':'hsd-ui',JSON.stringify({view:ui.view,set:ui.set,sort:ui.sort}));}catch(e){}};
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -392,7 +425,17 @@ function renderToolbar(){
 }
 
 /* ---------- Body ---------- */
+function renderBand(){
+  const name=(state.meta&&state.meta.band||'').trim()||'Setlist';
+  const w=name.split(/\s+/);const last=w.pop();
+  $('band').innerHTML=(w.length?esc(w.join(' '))+' ':'')+'<span>'+esc(last)+'</span>';
+  document.title=name==='Setlist'?'Setlist':name+' Setlist';
+}
 function renderSongs(){
+  if(!state.songs.length){
+    $('body').innerHTML=`<div class="empty"><p>No songs yet. Add them one at a time, load a CSV from your spreadsheet under Backup, or tap the sync button at the top to bring in songs you've already saved.</p><button class="btn primary" data-act="add-song">Add song</button></div>`;
+    $('stats').innerHTML='<span><b>0</b> songs</span>';return;
+  }
   const q=ui.q.trim().toLowerCase();
   let list=state.songs.filter(s=>!q||s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q));
   if(ui.sort==='az') list=list.slice().sort((a,b)=>a.title.localeCompare(b.title));
@@ -445,6 +488,7 @@ function renderSet(){
   $('stats').innerHTML=`<span><b>${songs.length}</b> songs</span><span><b>${countRetunes(songs)}</b> retunes</span><span><b>${nD}</b> with drums</span>`;
 }
 function renderBody(){
+  renderBand();
   if(ui.view==='songs') return renderSongs();
   if(!curSet()) return renderIndex();
   renderSet();
@@ -724,11 +768,13 @@ function mergeData(a,b){
     lb.forEach(x=>{m.set(x.id,x);order.push(x.id);});
     la.forEach(x=>{const y=m.get(x.id);if(!y){m.set(x.id,x);order.push(x.id);}else if((x.u||0)>(y.u||0))m.set(x.id,x);});
     return order.map(id=>m.get(id)).filter(x=>!(del[x.id]>=(x.u||0)));};
-  return {v:3,songs:mergeList(a.songs,b.songs),sets:mergeList(a.sets,b.sets),deleted:del};
+  const ma=a.meta||{u:0},mb=b.meta||{u:0};
+  return {v:3,songs:mergeList(a.songs,b.songs),sets:mergeList(a.sets,b.sets),deleted:del,meta:(ma.u||0)>(mb.u||0)?ma:mb};
 }
 let syncing=false,syncAgain=false,syncTimer=0;
-function scheduleSync(){if(!sync.token)return;clearTimeout(syncTimer);syncTimer=setTimeout(doSync,2500);}
+function scheduleSync(){if(DEMO||!sync.token)return;clearTimeout(syncTimer);syncTimer=setTimeout(doSync,2500);}
 async function doSync(){
+  if(DEMO)return;
   if(!sync.token){setStatus('off');return;}
   if(!navigator.onLine){setStatus('offline');return;}
   if(syncing){syncAgain=true;return;}
@@ -775,10 +821,10 @@ function renderSyncChip(){
   $('g-status').textContent=st[2]+(sync.last&&sync.status!=='ok'?' Last synced '+ago(sync.last)+'.':'');
 }
 setInterval(renderSyncChip,30000);
-$('syncchip').onclick=()=>{$('g-token').value=sync.token;$('g-repo').value=sync.repo;$('g-version').textContent='App version '+APP_VERSION;renderSyncChip();$('settings').hidden=false;};
+$('syncchip').onclick=()=>{$('g-band').value=(state.meta&&state.meta.band)||'';$('g-token').value=sync.token;$('g-repo').value=sync.repo;$('g-version').textContent='App version '+APP_VERSION;renderSyncChip();$('settings').hidden=false;};
 $('g-close').onclick=()=>$('settings').hidden=true;
 $('settings').addEventListener('click',e=>{if(e.target.id==='settings')$('settings').hidden=true;});
-$('g-form').addEventListener('submit',e=>{e.preventDefault();sync.token=$('g-token').value.trim();sync.repo=$('g-repo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'')||'Shanedwyer312/setlist-data';saveSyncCfg();doSync();});
+$('g-form').addEventListener('submit',e=>{e.preventDefault();const band=$('g-band').value.trim();if(band!==((state.meta&&state.meta.band)||'')){state.meta={band,u:Date.now()};saveLocal();renderBand();}sync.token=$('g-token').value.trim();sync.repo=$('g-repo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'')||'Shanedwyer312/setlist-data';saveSyncCfg();doSync();$('settings').hidden=true;toast(sync.token?'Saved. Syncing…':'Saved');});
 $('g-remove').onclick=()=>{sync.token='';sync.last=0;saveSyncCfg();$('g-token').value='';setStatus('off');toast('Key removed from this device');};
 window.addEventListener('online',()=>doSync());
 window.addEventListener('offline',()=>setStatus('offline'));
@@ -797,7 +843,8 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){
 }
 
 if(ui.view==='sets'&&ui.set&&!curSet()) ui.set=null;
-saveLocal();renderToolbar();renderBody();renderSyncChip();doSync();
+saveLocal();if(DEMO){$('demobar').hidden=false;$('syncchip').hidden=true;ui.view=ui.view||'sets';}
+renderToolbar();renderBody();renderSyncChip();doSync();
 })();
 </script>
 </body>

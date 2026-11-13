@@ -1,6 +1,6 @@
-# Half Step Down Setlist
+# Setlist
 
-A setlist, lyrics and stage app for acoustic gigs, built to run on an iPad on the mic stand.
+A setlist, lyrics and stage app for acoustic gigs, built to run on an iPad on the mic stand. Set your band name under Settings (the sync button in the top bar).
 
 - **Songs**: the master song list (title, artist, tuning, drum BPM and HeadRush rig number, lyrics or chord chart).
 - **Setlists**: one per gig, built by picking songs from the master list, with retune warnings between songs.
@@ -19,3 +19,7 @@ The app updates itself: when it opens with an internet connection, it picks up t
 Songs, charts and setlists are saved on each device first. If you add a GitHub access key (tap the sync button in the top bar), they also sync to a **private** data repo so all your devices match. No lyrics or personal data are stored in this public repo.
 
 To share the app, send someone the address. Their data stays on their own device, or in their own private repo if they set up sync.
+
+## Demo
+
+Open the app's address with `?demo` on the end to try it with Half Step Down's song list and an example setlist. Nothing changed in the demo is saved, and it never syncs.
