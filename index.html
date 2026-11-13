@@ -137,6 +137,12 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .trackrow .tname{flex:1 1 160px;min-width:0;font-size:15px;overflow-wrap:anywhere}
 .trackrow .tname.miss{color:var(--accent)}
 select.bandsel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px;font-weight:600}
+.helpbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--muted);font-weight:700;font-size:16px}
+.help details{border-bottom:1px solid var(--line);padding-block:4px}
+.help summary{cursor:pointer;font-family:var(--font-display);font-size:20px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;padding-block:10px;list-style-position:outside}
+.help ol,.help ul{margin:0 0 12px;padding-left:22px;display:grid;gap:6px;font-size:15px;line-height:1.45}
+.help p{margin:0 0 10px;font-size:15px;line-height:1.45;max-width:65ch}
+.help b{color:var(--fg)}
 .bpmctl{display:flex;align-items:center;gap:6px}
 .bpmctl .btn{width:52px;height:52px;justify-content:center;font-size:24px;font-weight:600;padding:0}
 .bpmval{display:grid;justify-items:center;min-width:72px;line-height:1}
@@ -198,6 +204,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       <h1 id="band"></h1>
       <div class="titleright">
         <select class="bandsel" id="bandsel" aria-label="Switch band" hidden></select>
+        <button class="helpbtn" id="helpbtn" aria-label="How to use the app">?</button>
         <button class="syncchip" id="syncchip" aria-label="Sync settings"><span class="dot"></span><span id="synctext">Sync off</span></button>
         <div class="seg" role="group" aria-label="View">
           <button id="v-songs" aria-pressed="true">Songs</button>
@@ -331,6 +338,121 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
   </form>
 </div>
 
+<div class="scrim" id="help" hidden>
+  <div class="sheet help">
+    <h2>How to use the app</h2>
+    <details open><summary>Getting started</summary>
+      <ol>
+        <li>Tap the <b>sync button</b> at the top (it says “Sync off” at first) to open <b>Settings</b>. Enter your band name.</li>
+        <li>Add songs with <b>Add song</b>, or load a CSV from your spreadsheet under <b>Backup</b>.</li>
+        <li>To keep your devices matched, paste your GitHub <b>access key</b> in Settings. Without a key, everything stays on this device only.</li>
+      </ol>
+    </details>
+    <details><summary>Install on the iPad</summary>
+      <ol>
+        <li>Open the app's address in Safari and tap Share → <b>Add to Home Screen</b>.</li>
+        <li>Always open it from that icon. The home-screen app keeps its own data, separate from Safari, so set up the sync key from inside it.</li>
+        <li>After the first open it works with no signal. It updates itself when it opens online.</li>
+      </ol>
+    </details>
+    <details><summary>Connecting your gear</summary>
+      <p><b>1. Drums: iPad to HeadRush (MIDI).</b> The app tells the HeadRush when to start, stop and what tempo to play. No audio goes over this connection.</p>
+      <p><b>Wired (most reliable):</b></p>
+      <ol>
+        <li>Plug the USB-C MIDI cable into the iPad (or computer).</li>
+        <li>Plug the cable's <b>OUT</b> plug into the HeadRush's <b>MIDI In</b>. The IN plug can stay loose. If nothing responds, swap plugs; some brands label them the other way around.</li>
+        <li>Open the app in <b>Web MIDI Browser</b> on the iPad, or Chrome on a computer.</li>
+        <li>Settings → HeadRush MIDI → <b>Connect MIDI</b>. It should show the cable's name. Pick the MIDI channel the HeadRush listens on (1 unless you changed it).</li>
+        <li>Test: open a drum song on stage and tap Start. The light on the cable's box should flash.</li>
+      </ol>
+      <p><b>Bluetooth (no cable to the HeadRush):</b></p>
+      <ol>
+        <li>Plug a Bluetooth MIDI adapter into the HeadRush's <b>MIDI In</b> (and power it, if the adapter needs USB power).</li>
+        <li>Pair it from inside Web MIDI Browser, following the adapter's iPad instructions. Bluetooth MIDI usually doesn't pair from the iPad's own Bluetooth settings.</li>
+        <li>Settings → HeadRush MIDI → <b>Connect MIDI</b>, then pick the adapter as the MIDI output.</li>
+        <li>Keep <b>How to set tempo</b> on <b>Tap tempo</b>. MIDI clock can drift over Bluetooth.</li>
+        <li>Test it at a loud rehearsal before a gig, and keep the wired cable in the gig bag as a backup.</li>
+      </ol>
+      <p><b>2. Backing tracks: iPad to the mixer (audio).</b> The track goes to its own channel on the board, not through the HeadRush. No MIDI is needed.</p>
+      <p><b>Track only (no click):</b></p>
+      <ol>
+        <li>Plug a USB-C audio adapter or small USB-C audio interface into the iPad.</li>
+        <li>Run its output to a <b>DI box</b>, and the DI to a channel on the mixer.</li>
+        <li>In Settings → Backing tracks, leave <b>Split output</b> off. The track plays on both sides.</li>
+        <li>Set the iPad's volume high and steady, and let the sound person set the level at the board.</li>
+      </ol>
+      <p><b>Track to the board, click to in-ears:</b></p>
+      <ol>
+        <li>Use an interface with two outputs, or a stereo cable that splits into two mono plugs (left and right).</li>
+        <li><b>Left</b> (the track) → DI → mixer channel for the audience.</li>
+        <li><b>Right</b> (the click) → the in-ear monitor mix only. Keep it out of the main speakers.</li>
+        <li>In Settings → Backing tracks, turn on <b>Split output</b>. Add a click file to each song that needs one.</li>
+      </ol>
+      <p><b>Both at once</b> (one iPad port): use an audio interface with a MIDI Out built in, or a USB-C hub. Or use Bluetooth for MIDI so the port is free for audio. A hub with charging pass-through also keeps the iPad charged during the gig.</p>
+    </details>
+    <details><summary>Songs</summary>
+      <ul>
+        <li><b>Songs</b> is the master list. Tap a song to edit it. Changes show up in every setlist that uses it.</li>
+        <li><b>Tuning</b> drives the retune warnings. Write it like E, Eb, Drop D, Drop Db or Capo 2.</li>
+        <li><b>Lyrics &amp; chords:</b> paste lyrics, or a chord chart with chords on the line above the words. Lines like [Chorus] become section labels. Use the Find links to look up charts. Turn off <b>Show chords on stage</b> for lyrics-only songs.</li>
+        <li><b>Notes</b> show under the song title on stage (e.g. “capo off, Brian starts”).</li>
+      </ul>
+    </details>
+    <details><summary>Setlists</summary>
+      <ul>
+        <li>Tap <b>Setlists → New setlist</b>, name it and set the date.</li>
+        <li><b>Add songs</b> lets you check songs off the master list.</li>
+        <li>Reorder with ▲ ▼, remove with ×. <b>Group by tuning</b> sorts the set so you retune as little as possible (Undo is in the message that pops up).</li>
+        <li>Retune lines between songs, and the retune count at the top, update as you go.</li>
+        <li><b>Duplicate</b> copies a setlist for the next gig.</li>
+      </ul>
+    </details>
+    <details><summary>On stage</summary>
+      <ul>
+        <li>Tap <b>▶ Play set</b>, or tap any song in a setlist, to open it full screen.</li>
+        <li><b>Scroll</b> starts auto-scroll. − / + next to it change the speed. Tap the lyrics to pause.</li>
+        <li><b>A− / A+</b> change the text size. Speed and size are remembered for each song.</li>
+        <li><b>Next ›</b> shows what's next and warns you if you need to retune.</li>
+        <li>A Bluetooth page-turner works too. Up/down scrolls, left/right changes song.</li>
+      </ul>
+    </details>
+    <details><summary>Drums (HeadRush)</summary>
+      <ol>
+        <li>On the HeadRush, set up a drum preset you like. For a plain kick, mute Snares, Cymbals and Toms.</li>
+        <li>Connect the MIDI cable to the HeadRush's MIDI In. Open the app in Chrome on a computer, or in the Web MIDI Browser app on the iPad. Safari can't send MIDI.</li>
+        <li>In Settings → HeadRush MIDI, tap <b>Connect MIDI</b>.</li>
+        <li>In a song, turn on <b>Drums</b> and set the <b>BPM</b> (use <b>Tap</b> to tap it in while the record plays). Add a <b>Rig #</b> if the song should load a rig.</li>
+        <li>On stage: <b>Start</b> counts in, then starts the drums. <b>Fill</b>, <b>End</b> (outro) and <b>Stop</b> work right away. Moving to the next song stops the drums.</li>
+        <li><b>− / +</b> change the tempo live. From a setlist, the change is saved for that gig only. Use “Make this the song's BPM” to keep it.</li>
+      </ol>
+    </details>
+    <details><summary>Backing tracks</summary>
+      <ol>
+        <li>In a song, under <b>Backing track</b>, tap <b>Choose track…</b> (MP3, M4A or WAV). Add an optional <b>click</b> file for in-ears.</li>
+        <li>Audio stays on the device you added it on. Add the files on each iPad that plays them.</li>
+        <li>On stage: <b>Start</b> plays the track and scrolls the lyrics so they end with the song. <b>Fade</b> brings it down over 4 seconds. <b>Stop</b> cuts it.</li>
+        <li>For in-ears, turn on <b>Split output</b> in Settings: track on the left side to the board, click on the right side to the monitor mix.</li>
+      </ol>
+    </details>
+    <details><summary>Bands</summary>
+      <ul>
+        <li>Settings → <b>Bands</b> → type a name → <b>Add band</b>. Each band has its own songs, setlists and sync.</li>
+        <li>Switch bands with the menu at the top.</li>
+        <li>To share a band between people, use one private data repo for that band and give each person access. Each person enters their own key.</li>
+      </ul>
+    </details>
+    <details><summary>Sync and backup</summary>
+      <ul>
+        <li>The sync button shows the status. “Synced just now” means this device matches your data repo.</li>
+        <li><b>Before a gig:</b> open the app at home and check that it says Synced. Then it's fine with no signal.</li>
+        <li>Changes made offline sync the next time the app is online. If the same song is edited on two devices offline, the latest edit wins.</li>
+        <li><b>Backup → Save backup file</b> saves everything except audio files. <b>Load</b> restores it or moves it to another device.</li>
+      </ul>
+    </details>
+    <div class="actions"><button class="btn primary" id="help-close">Close</button></div>
+  </div>
+</div>
+
 <div class="stage" id="stage" hidden>
   <div class="sbar">
     <button class="btn" id="st-close" aria-label="Close stage view">✕</button>
@@ -452,7 +574,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.4.0';
+const APP_VERSION='1.5.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1099,6 +1221,9 @@ $('g-addband').onclick=()=>{
   location.reload();
 };
 
+$('helpbtn').onclick=()=>{$('help').hidden=false;};
+$('help-close').onclick=()=>{$('help').hidden=true;};
+$('help').addEventListener('click',e=>{if(e.target.id==='help')$('help').hidden=true;});
 /* ---------- Backup file ---------- */
 $('b-file-save').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,1)],{type:'application/json'});
