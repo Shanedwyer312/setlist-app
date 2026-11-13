@@ -60,6 +60,9 @@ h1 span{color:var(--accent)}
 .syncchip.ok .dot{background:var(--t-e)} .syncchip.syncing .dot{background:var(--accent)} .syncchip.bad .dot{background:var(--danger)} .syncchip.bad{color:var(--danger)}
 .demobar{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--fg);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:8px;padding:8px 12px;font-size:14px}
 .demobar a{color:var(--accent);font-weight:600}
+.demobar{display:grid;gap:6px}
+.demohow summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.demohow ol{margin:8px 0 2px;padding-left:20px;display:grid;gap:6px;line-height:1.45}
 .titleright{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .search{flex:1 1 180px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:16px}
 select.sort{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
@@ -199,7 +202,17 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="demobar" id="demobar" hidden>Demo with Half Step Down’s songs. Nothing you change here is saved. <a href="./">Start your own copy ›</a></div>
+    <div class="demobar" id="demobar" hidden>
+      <div>Demo with Half Step Down’s songs. Nothing you change here is saved. <a href="./">Start your own copy ›</a></div>
+      <details class="demohow"><summary>How to install your own copy</summary>
+        <ol>
+          <li>Tap <b>Start your own copy</b>. It opens empty, ready for your songs.</li>
+          <li><b>iPad or iPhone:</b> in Safari, tap Share (the square with an up arrow; on newer iPads it may be under ⋯), then <b>Add to Home Screen</b>.<br><b>Android:</b> in Chrome, tap ⋮, then <b>Add to Home screen</b> or <b>Install app</b>.<br><b>Computer:</b> in Chrome, click the <b>Install</b> icon in the address bar.</li>
+          <li>Close the browser and open the app from its new icon. Use the icon from then on; it keeps its own data and works offline.</li>
+          <li>Tap the <b>?</b> button inside the app for the full guide.</li>
+        </ol>
+      </details>
+    </div>
     <div class="titlerow">
       <h1 id="band"></h1>
       <div class="titleright">
@@ -574,7 +587,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.5.0';
+const APP_VERSION='1.5.1';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
