@@ -104,7 +104,7 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .empty p{margin:0;max-width:34ch}
 
 /* Stage view */
-.stage{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.stage{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr) auto auto auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .sbar,.sfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-bottom:1px solid var(--line)}
 .sfoot{border-bottom:0;border-top:1px solid var(--line)}
 .sinfo{flex:1 1 220px;min-width:0;display:grid;gap:2px}
@@ -128,6 +128,15 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .sfoot .btn{min-height:48px;padding-inline:20px;font-size:16px;font-weight:600}
 .snotes{font-size:14px;color:var(--fg);opacity:.85}
 .drumbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-top:1px solid var(--line)}
+.trackbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-top:1px solid var(--line)}
+.tprog{display:flex;align-items:center;gap:10px;flex:1 1 220px;min-width:0}
+.tbar{flex:1;height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.tbar i{display:block;height:100%;width:0;background:var(--t-e)}
+#t-time{font-family:var(--font-mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.trackrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.trackrow .tname{flex:1 1 160px;min-width:0;font-size:15px;overflow-wrap:anywhere}
+.trackrow .tname.miss{color:var(--accent)}
+select.bandsel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px;font-weight:600}
 .bpmctl{display:flex;align-items:center;gap:6px}
 .bpmctl .btn{width:52px;height:52px;justify-content:center;font-size:24px;font-weight:600;padding:0}
 .bpmval{display:grid;justify-items:center;min-width:72px;line-height:1}
@@ -188,6 +197,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
     <div class="titlerow">
       <h1 id="band"></h1>
       <div class="titleright">
+        <select class="bandsel" id="bandsel" aria-label="Switch band" hidden></select>
         <button class="syncchip" id="syncchip" aria-label="Sync settings"><span class="dot"></span><span id="synctext">Sync off</span></button>
         <div class="seg" role="group" aria-label="View">
           <button id="v-songs" aria-pressed="true">Songs</button>
@@ -221,6 +231,12 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
         <label class="f">Rig #<input id="e-rig" type="number" inputmode="numeric" min="1" max="999" placeholder="Loads by Program Change"></label>
       </div>
       <label class="f">Drum note<input id="e-dnote" placeholder="Kick only, 4 on the floor"></label>
+    </fieldset>
+    <fieldset>
+      <legend>Backing track</legend>
+      <p class="hint">Audio files stay on this device because they're too big to sync. Add them on each iPad that plays them. MP3, M4A and WAV work.</p>
+      <div class="trackrow"><span class="tname" id="e-track-name">No track</span><label class="btn" for="e-track-file">Choose track…</label><input type="file" id="e-track-file" accept="audio/*,.mp3,.m4a,.wav,.aac" hidden><button type="button" class="btn danger" id="e-track-rm" hidden>Remove</button></div>
+      <div class="trackrow"><span class="tname" id="e-click-name">No click file (optional, for in-ears)</span><label class="btn" for="e-click-file">Choose click…</label><input type="file" id="e-click-file" accept="audio/*,.mp3,.m4a,.wav,.aac" hidden><button type="button" class="btn danger" id="e-click-rm" hidden>Remove</button></div>
     </fieldset>
     <fieldset>
       <legend>Lyrics &amp; chords</legend>
@@ -272,6 +288,17 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
   <form class="sheet" id="g-form">
     <h2>Settings</h2>
     <label class="f">Band name<input id="g-band" placeholder="Shown at the top of the app" autocomplete="off"></label>
+    <fieldset>
+      <legend>Bands</legend>
+      <p class="hint">Each band has its own songs, setlists and sync. Switch bands with the menu at the top.</p>
+      <div class="trackrow"><input id="g-newband" class="search" placeholder="New band name" autocomplete="off"><button type="button" class="btn" id="g-addband">Add band</button></div>
+    </fieldset>
+    <fieldset>
+      <legend>Backing tracks</legend>
+      <label class="toggle"><input type="checkbox" id="a-split"> Split output: track on the left side, click on the right (for in-ears)</label>
+      <p class="hint">With split on, use a stereo-to-two-mono cable or an interface: left to the board, right to the monitor mix. With it off, the track plays on both sides and click files are not played.</p>
+      <label class="toggle"><input type="checkbox" id="a-fit"> Scroll lyrics so they finish when the track ends</label>
+    </fieldset>
     <p class="hint">Everything saves on this device first, so the app works with no signal. When you're online it also syncs with your private GitHub repo, which keeps the iPad and your computer matched. Each device needs the access key once.</p>
     <label class="f">Access key<input id="g-token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></label>
     <label class="f">Data repo<input id="g-repo" autocapitalize="off" spellcheck="false"></label>
@@ -325,6 +352,15 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
     </div>
   </div>
   <div class="sbody" id="st-body"></div>
+  <div class="trackbar" id="trackbar" hidden>
+    <div class="dbtns">
+      <button class="dbtn go" id="t-start">Start</button>
+      <button class="dbtn" id="t-fade">Fade</button>
+      <button class="dbtn stop" id="t-stop">Stop</button>
+    </div>
+    <div class="tprog"><div class="tbar"><i id="t-fill"></i></div><span id="t-time">0:00 / 0:00</span></div>
+    <div class="dmeta"><span id="t-status"></span></div>
+  </div>
   <div class="drumbar" id="drumbar" hidden>
     <div class="bpmctl">
       <button class="btn" id="d-slower" aria-label="Slower">−</button>
@@ -352,7 +388,13 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
 <script>
 (function(){
 const DEMO=new URLSearchParams(location.search).has('demo');
-const KEY=DEMO?'hsd-demo':'hsd-setlist-v2', OLD='hsd-setlist-v1';
+const WS_KEY='hsd-bands';
+let bands=[{id:'main',name:''}],curBand='main';
+try{const b=JSON.parse(localStorage.getItem(WS_KEY)||'null');if(b&&Array.isArray(b.list)&&b.list.length){bands=b.list;curBand=b.cur||'main';}}catch(e){}
+if(!bands.find(b=>b.id===curBand))curBand=bands[0].id;
+const SFX=curBand==='main'?'':'-'+curBand;
+const saveBands=()=>{try{localStorage.setItem(WS_KEY,JSON.stringify({list:bands,cur:curBand}));}catch(e){}};
+const KEY=DEMO?'hsd-demo':(curBand==='main'?'hsd-setlist-v2':'hsd-ws-'+curBand), OLD=curBand==='main'?'hsd-setlist-v1':'hsd-none';
 const DEMO_SONGS=[
 ["Heart-Shaped Box","Nirvana","Drop Db",""],["Nutshell","Alice In Chains","Eb",""],["Fine Again","Seether","Eb",""],
 ["Interstate Love Song","Stone Temple Pilots","E",""],["Let Her Cry","Hootie & The Blowfish","Eb",""],["Hole Hearted","Extreme","Eb",""],
@@ -410,7 +452,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.3.0';
+const APP_VERSION='1.4.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -421,8 +463,8 @@ function saveLocal(){if(DEMO)return;try{localStorage.setItem(KEY,JSON.stringify(
 function save(){saveLocal();scheduleSync();}
 let state=load();
 const ui={view:'songs',set:null,q:'',sort:'sheet'};
-try{const u=JSON.parse(localStorage.getItem(DEMO?'hsd-ui-demo':'hsd-ui')||'null');if(u){ui.view=u.view==='sets'?'sets':'songs';ui.set=u.set||null;ui.sort=u.sort||'sheet';}}catch(e){}
-const saveUi=()=>{try{localStorage.setItem(DEMO?'hsd-ui-demo':'hsd-ui',JSON.stringify({view:ui.view,set:ui.set,sort:ui.sort}));}catch(e){}};
+try{const u=JSON.parse(localStorage.getItem(DEMO?'hsd-ui-demo':'hsd-ui'+SFX)||'null');if(u){ui.view=u.view==='sets'?'sets':'songs';ui.set=u.set||null;ui.sort=u.sort||'sheet';}}catch(e){}
+const saveUi=()=>{try{localStorage.setItem(DEMO?'hsd-ui-demo':'hsd-ui'+SFX,JSON.stringify({view:ui.view,set:ui.set,sort:ui.sort}));}catch(e){}};
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -447,10 +489,12 @@ function countRetunes(songs){let n=0,p=null;songs.forEach(s=>{const t=tune(s.tun
 
 const ICON='<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v3M8 11.5v3M3.4 3.4l2.1 2.1M10.5 10.5l2.1 2.1M1.5 8h3M11.5 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
 
+const fmtTime=t=>{t=Math.max(0,Math.round(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
 function metaHTML(s){
   const t=tune(s.tuning);
   const m=[`<span>${esc(s.artist)}</span>`,`<span class="chip t-${t.cls}"><span class="dot"></span>${esc(s.tuning||'—')}</span>`];
   if(s.og) m.push(`<span class="og">orig. ${esc(s.og)}</span>`);
+  if(s.track) m.push(`<span class="drum">TRACK ${s.track.dur?fmtTime(s.track.dur):''}</span>`);
   if(s.drums) m.push(`<span class="drum">KICK ${s.bpm?esc(s.bpm)+' BPM':'· set BPM'}${s.rig?' · RIG '+esc(s.rig):''}</span>`);
   return m.join('');
 }
@@ -492,6 +536,9 @@ function renderBand(){
   const w=name.split(/\s+/);const last=w.pop();
   $('band').innerHTML=(w.length?esc(w.join(' '))+' ':'')+'<span>'+esc(last)+'</span>';
   document.title=name==='Setlist'?'Setlist':name+' Setlist';
+  if(!DEMO){const me=bands.find(b=>b.id===curBand);if(me&&me.name!==name){me.name=name;saveBands();}
+    const sel=$('bandsel');sel.hidden=bands.length<2;
+    sel.innerHTML=bands.map(b=>`<option value="${esc(b.id)}">${esc(b.name||'Untitled band')}</option>`).join('');sel.value=curBand;}
 }
 function renderSongs(){
   if(!state.songs.length){
@@ -612,6 +659,7 @@ function openEditor(id){
   $('e-drums').checked=!!s.drums;$('e-bpm').value=s.bpm??'';$('e-rig').value=s.rig??'';
   $('e-dnote').value=s.dnote||'';$('e-notes').value=s.notes||'';
   $('e-chart').value=s.chart||'';$('e-chords').checked=s.chords!==false;
+  pend={track:undefined,click:undefined};showTrackFields(s);
   taps=[];$('e-tap-hint').textContent='Play the song and tap along to set the BPM.';
   updateLinks();
   $('e-delete').hidden=!id;$('editor').hidden=false;
@@ -638,11 +686,15 @@ function saveEditor(){
   const data={title:$('e-title').value.trim(),artist:$('e-artist').value.trim(),tuning:$('e-tuning').value.trim(),og:$('e-og').value.trim(),
     drums:$('e-drums').checked,bpm:num($('e-bpm').value),rig:num($('e-rig').value),dnote:$('e-dnote').value.trim(),notes:$('e-notes').value,
     chart:$('e-chart').value.replace(/\s+$/,''),chords:$('e-chords').checked};
+  const prev=editing?song(editing):{};
+  ['track','click'].forEach(k=>{data[k]=pend[k]===undefined?(prev[k]||null):pend[k]?{name:pend[k].name,size:pend[k].size,dur:pend[k].dur||0}:null;});
   if(!data.title){$('e-title').focus();return null;}
   data.u=Date.now();
   let id=editing;
   if(id) Object.assign(song(id),data);
   else{id=mkId();state.songs.push({id,...data});}
+  ['track','click'].forEach(k=>{const f=pend[k];if(f===null)aDel(akey(id,k));else if(f)aPut(akey(id,k),{blob:f.file,name:f.name}).catch(()=>toast("Couldn't save the audio file on this device. It may be out of storage."));});
+  if(!$('stage').hidden&&stg.ids[stg.i]===id&&(pend.track!==undefined||pend.click!==undefined)) setTimeout(()=>loadTrackFor(song(id)),300);
   closeEditor();commit();
   if(!$('stage').hidden) renderStage();
   return id;
@@ -723,12 +775,13 @@ function drawChart(){
 }
 function scrollTick(t0){
   let last=t0;
-  const step=t=>{if(!stg.scrolling)return;const dt=(t-last)/1000;last=t;$('st-body').scrollTop+=stg.speed*9*dt*(stg.size/24);
+  const b0=$('st-body');stg.acc=b0.scrollTop;
+  const step=t=>{if(!stg.scrolling)return;const dt=(t-last)/1000;last=t;const px=stg.fixedPx!=null?stg.fixedPx:stg.speed*9*(stg.size/24);stg.acc+=px*dt;$('st-body').scrollTop=stg.acc;
     const b=$('st-body');if(b.scrollTop+b.clientHeight>=b.scrollHeight-2){stopScroll();return;}stg.raf=requestAnimationFrame(step);};
   stg.raf=requestAnimationFrame(step);
 }
 function startScroll(){stg.scrolling=true;$('st-scroll').setAttribute('aria-pressed','true');$('st-scroll').textContent='Pause';scrollTick(performance.now());}
-function stopScroll(){stg.scrolling=false;cancelAnimationFrame(stg.raf);$('st-scroll').setAttribute('aria-pressed','false');$('st-scroll').textContent='Scroll';}
+function stopScroll(){stg.scrolling=false;stg.fixedPx=null;cancelAnimationFrame(stg.raf);$('st-scroll').setAttribute('aria-pressed','false');$('st-scroll').textContent='Scroll';}
 $('st-close').onclick=closeStage;
 $('st-prev').onclick=()=>{if(stg.i>0){drumsLeave();stg.i--;renderStage();}};
 $('st-nextbtn').onclick=()=>{if(stg.i<stg.ids.length-1){drumsLeave();stg.i++;renderStage();}};
@@ -753,6 +806,7 @@ $('e-delete').onclick=()=>{
   if(!delArmed){const n=state.sets.filter(st=>st.ids.includes(editing)).length;delArmed=true;
     $('e-delete').textContent=n?`Tap again — removes it from ${n} setlist${n>1?'s':''}`:'Tap again to delete';return;}
   const before=snap();
+  aDel(akey(editing,'track'));aDel(akey(editing,'click'));
   state.deleted[editing]=Date.now();state.songs=state.songs.filter(s=>s.id!==editing);state.sets.forEach(st=>{if(st.ids.includes(editing)){st.ids=st.ids.filter(id=>id!==editing);touch(st);}});
   closeEditor();commit();toast('Song deleted',restore(before));
 };
@@ -889,6 +943,7 @@ const drum={running:false,timers:[]};
 const curStageSet=()=>stg.set?state.sets.find(x=>x.id===stg.set):null;
 function effBpm(s){const st=curStageSet();return (st&&st.bpm&&st.bpm[s.id])||s.bpm||null;}
 function renderDrums(){
+  renderTrack();
   const s=song(stg.ids[stg.i]);const show=!!(s&&s.drums);$('drumbar').hidden=!show;if(!show)return;
   const b=effBpm(s);const st=curStageSet();const gig=!!(st&&st.bpm&&st.bpm[s.id]&&st.bpm[s.id]!==s.bpm);
   $('d-bpm').textContent=b||'—';$('d-bpmbox').classList.toggle('gig',gig);
@@ -898,6 +953,7 @@ function renderDrums(){
   renderMidi();
 }
 function songOpened(s){
+  loadTrackFor(s);
   if(!s.drums){stopClock();return;}
   if(mcfg.rig&&s.rig!=null&&s.rig!=='') sendPC(s.rig);
   const b=effBpm(s);
@@ -913,7 +969,7 @@ function setBpm(v){
   clearTimeout(bpmTimer);bpmTimer=setTimeout(()=>sendTempo(v),350);
 }
 function clearCount(){drum.timers.forEach(clearTimeout);drum.timers=[];$('countin').hidden=true;}
-function drumsLeave(){clearCount();if(drum.running){sendCC(mcfg.map.stop);drum.running=false;}}
+function drumsLeave(){trackStop(true);clearCount();if(drum.running){sendCC(mcfg.map.stop);drum.running=false;}}
 $('d-slower').onclick=()=>{const s=song(stg.ids[stg.i]);setBpm((effBpm(s)||100)-1);};
 $('d-faster').onclick=()=>{const s=song(stg.ids[stg.i]);setBpm((effBpm(s)||100)+1);};
 $('d-reset').onclick=()=>{const s=song(stg.ids[stg.i]);const st=curStageSet();if(st&&st.bpm){delete st.bpm[s.id];touch(st);save();}renderDrums();sendTempo(s.bpm);};
@@ -935,6 +991,114 @@ $('d-end').onclick=()=>{clearCount();sendCC(mcfg.map.end);drum.running=false;ren
 $('d-stop').onclick=()=>{clearCount();sendCC(mcfg.map.stop);drum.running=false;stopScroll();renderDrums();};
 if(mcfg.enabled&&navigator.requestMIDIAccess) midiConnect(); else {midi.status=navigator.requestMIDIAccess?'off':'unsupported';}
 
+
+/* ---------- Backing tracks (stored on this device in IndexedDB) ---------- */
+let pend={track:undefined,click:undefined};
+const akey=(id,kind)=>(DEMO?'demo':curBand)+':'+id+':'+kind;
+let _adb=null;
+function adb(){if(_adb)return _adb;_adb=new Promise((res,rej)=>{const r=indexedDB.open('hsd-audio',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});return _adb;}
+async function aTx(mode,fn){const db=await adb();return new Promise((res,rej)=>{const t=db.transaction('files',mode);const req=fn(t.objectStore('files'));t.oncomplete=()=>res(req&&req.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);});}
+const aPut=(k,v)=>aTx('readwrite',st=>st.put(v,k));
+const aGet=k=>aTx('readonly',st=>st.get(k)).catch(()=>null);
+const aDel=k=>aTx('readwrite',st=>st.delete(k)).catch(()=>{});
+function fileDuration(file){return new Promise(res=>{const a=new Audio();const u=URL.createObjectURL(file);a.preload='metadata';a.onloadedmetadata=()=>{res(isFinite(a.duration)?a.duration:0);URL.revokeObjectURL(u);};a.onerror=()=>{res(0);URL.revokeObjectURL(u);};a.src=u;});}
+async function showTrackFields(s){
+  for(const k of ['track','click']){
+    const el=$('e-'+k+'-name'),rm=$('e-'+k+'-rm');const p=pend[k];const meta=p===undefined?s[k]:p;
+    rm.hidden=!meta;el.classList.remove('miss');
+    if(!meta){el.textContent=k==='track'?'No track':'No click file (optional, for in-ears)';continue;}
+    el.textContent=meta.name+(meta.dur?' · '+fmtTime(meta.dur):'');
+    if(p===undefined&&s.id){const rec=await aGet(akey(s.id,k));if(!rec){el.textContent+=' · not on this device yet. Choose the file again to add it here.';el.classList.add('miss');}}
+  }
+}
+['track','click'].forEach(k=>{
+  $('e-'+k+'-file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+    pend[k]={file:f,name:f.name,size:f.size,dur:await fileDuration(f)};showTrackFields(editing?song(editing):{});};
+  $('e-'+k+'-rm').onclick=()=>{pend[k]=null;showTrackFields(editing?song(editing):{});};
+});
+
+const ACFG_KEY='hsd-audio-cfg';
+const acfg={split:false,fit:true};
+try{Object.assign(acfg,JSON.parse(localStorage.getItem(ACFG_KEY)||'{}'));}catch(e){}
+const saveAcfg=()=>{try{localStorage.setItem(ACFG_KEY,JSON.stringify(acfg));}catch(e){}};
+$('a-split').onchange=e=>{acfg.split=e.target.checked;saveAcfg();};
+$('a-fit').onchange=e=>{acfg.fit=e.target.checked;saveAcfg();};
+
+const player={ctx:null,buf:null,clickBuf:null,srcs:[],out:null,t0:0,dur:0,playing:false,raf:0,loadedFor:null,stopT:0};
+function actx(){if(!player.ctx){const C=window.AudioContext||window.webkitAudioContext;player.ctx=new C();}return player.ctx;}
+function decode(blob){return blob.arrayBuffer().then(ab=>new Promise((res,rej)=>actx().decodeAudioData(ab,res,rej)));}
+function tStatus(t,cls){const el=$('t-status');el.textContent=t;el.className=cls||'';}
+async function loadTrackFor(s){
+  trackStop(true);player.buf=player.clickBuf=null;player.dur=0;player.loadedFor=s.id;renderTrack();
+  if(!s.track)return;
+  tStatus('Loading track…');$('t-start').disabled=true;
+  try{
+    const rec=await aGet(akey(s.id,'track'));if(player.loadedFor!==s.id)return;
+    if(!rec){tStatus("This song's track isn't on this device yet. Tap Edit and choose the file.",'warn');return;}
+    const buf=await decode(rec.blob);let cb=null;
+    if(s.click){const c=await aGet(akey(s.id,'click'));if(c)cb=await decode(c.blob);}
+    if(player.loadedFor!==s.id)return;
+    player.buf=buf;player.clickBuf=cb;player.dur=buf.duration;
+    tStatus(s.track.name+(cb?' · click loaded':'')+(acfg.split?' · split output':''),'ok');
+  }catch(e){if(player.loadedFor===s.id)tStatus("Couldn't read this audio file. Try MP3, M4A or WAV.",'warn');}
+  renderTrack();
+}
+function renderTrack(){
+  const s=song(stg.ids[stg.i]);const show=!!(s&&s.track);$('trackbar').hidden=!show;if(!show)return;
+  $('t-start').disabled=!player.buf||player.playing;$('t-fade').disabled=!player.playing;
+  const el=player.playing?player.ctx.currentTime-player.t0:0;
+  $('t-time').textContent=fmtTime(el)+' / '+fmtTime(player.dur||(s.track&&s.track.dur));
+  $('t-fill').style.width=(player.dur?Math.min(100,Math.max(0,el/player.dur*100)):0)+'%';
+}
+function monoInto(ctx,buf,dest,ch){
+  const src=ctx.createBufferSource();src.buffer=buf;
+  const g=ctx.createGain();g.channelCount=1;g.channelCountMode='explicit';g.channelInterpretation='speakers';
+  src.connect(g);g.connect(dest,0,ch);return src;
+}
+function trackStart(){
+  if(!player.buf||player.playing)return;
+  const ctx=actx();if(ctx.state!=='running')ctx.resume();
+  const out=ctx.createGain();out.connect(ctx.destination);player.out=out;
+  const when=ctx.currentTime+0.1;const srcs=[];
+  if(acfg.split){
+    const m=ctx.createChannelMerger(2);m.connect(out);
+    srcs.push(monoInto(ctx,player.buf,m,0));
+    if(player.clickBuf) srcs.push(monoInto(ctx,player.clickBuf,m,1));
+  } else {const src=ctx.createBufferSource();src.buffer=player.buf;src.connect(out);srcs.push(src);}
+  srcs.forEach(x=>x.start(when));srcs[0].onended=()=>{if(player.srcs===srcs)trackStop(false);};
+  player.srcs=srcs;player.t0=when;player.playing=true;
+  // lyrics: scroll from where they are so they finish with the track
+  if(acfg.fit){const b=$('st-body');const rem=b.scrollHeight-b.clientHeight-b.scrollTop;
+    stopScroll();setTimeout(()=>{if(!player.playing)return;stg.fixedPx=rem>0?rem/player.dur:0;startScroll();stg.fixedPx=rem>0?rem/player.dur:0;},100);}
+  const tick=()=>{if(!player.playing)return;renderTrack();player.raf=requestAnimationFrame(tick);};tick();
+  renderTrack();
+}
+function trackStop(quiet){
+  clearTimeout(player.stopT);cancelAnimationFrame(player.raf);
+  player.srcs.forEach(x=>{try{x.onended=null;x.stop();}catch(e){}});player.srcs=[];
+  if(player.out){try{player.out.disconnect();}catch(e){}player.out=null;}
+  const was=player.playing;player.playing=false;
+  if(was&&!quiet)stopScroll();
+  if(!$('trackbar').hidden)renderTrack();
+}
+function trackFade(){
+  if(!player.playing||!player.out)return;const ctx=player.ctx,g=player.out.gain;
+  g.setValueAtTime(g.value,ctx.currentTime);g.linearRampToValueAtTime(0,ctx.currentTime+4);
+  player.stopT=setTimeout(()=>trackStop(false),4100);
+}
+$('t-start').onclick=trackStart;
+$('t-fade').onclick=trackFade;
+$('t-stop').onclick=()=>trackStop(false);
+
+/* Bands */
+$('bandsel').onchange=e=>{curBand=e.target.value;saveBands();location.reload();};
+$('g-addband').onclick=()=>{
+  const name=$('g-newband').value.trim();if(!name){$('g-newband').focus();return;}
+  const id='b'+Date.now().toString(36);bands.push({id,name});curBand=id;saveBands();
+  try{localStorage.setItem('hsd-ws-'+id,JSON.stringify({v:3,deleted:{},songs:[],sets:[],meta:{band:name,u:Date.now()}}));}catch(e){}
+  location.reload();
+};
+
 /* ---------- Backup file ---------- */
 $('b-file-save').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,1)],{type:'application/json'});
@@ -943,8 +1107,8 @@ $('b-file-save').onclick=()=>{
 };
 
 /* ---------- Sync with the private GitHub data repo ---------- */
-const SYNC_KEY='hsd-sync';
-const sync={token:'',repo:'Shanedwyer312/setlist-data',path:'setlist.json',last:0,status:'off'};
+const SYNC_KEY='hsd-sync'+SFX;
+const sync={token:'',repo:curBand==='main'?'Shanedwyer312/setlist-data':'',path:'setlist.json',last:0,status:'off'};
 try{const c=JSON.parse(localStorage.getItem(SYNC_KEY)||'{}');['token','repo','path','last'].forEach(k=>{if(c[k])sync[k]=c[k];});}catch(e){}
 const saveSyncCfg=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify({token:sync.token,repo:sync.repo,path:sync.path,last:sync.last}));}catch(e){}};
 const b64enc=str=>{const b=new TextEncoder().encode(str);let bin='';for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin);};
@@ -970,7 +1134,7 @@ let syncing=false,syncAgain=false,syncTimer=0;
 function scheduleSync(){if(DEMO||!sync.token)return;clearTimeout(syncTimer);syncTimer=setTimeout(doSync,2500);}
 async function doSync(){
   if(DEMO)return;
-  if(!sync.token){setStatus('off');return;}
+  if(!sync.token||!sync.repo){setStatus('off');return;}
   if(!navigator.onLine){setStatus('offline');return;}
   if(syncing){syncAgain=true;return;}
   syncing=true;setStatus('syncing');
@@ -1016,10 +1180,10 @@ function renderSyncChip(){
   $('g-status').textContent=st[2]+(sync.last&&sync.status!=='ok'?' Last synced '+ago(sync.last)+'.':'');
 }
 setInterval(renderSyncChip,30000);
-$('syncchip').onclick=()=>{fillMidiSettings();$('g-band').value=(state.meta&&state.meta.band)||'';$('g-token').value=sync.token;$('g-repo').value=sync.repo;$('g-version').textContent='App version '+APP_VERSION;renderSyncChip();$('settings').hidden=false;};
+$('syncchip').onclick=()=>{fillMidiSettings();$('a-split').checked=acfg.split;$('a-fit').checked=acfg.fit;$('g-newband').value='';$('g-band').value=(state.meta&&state.meta.band)||'';$('g-token').value=sync.token;$('g-repo').value=sync.repo;$('g-version').textContent='App version '+APP_VERSION;renderSyncChip();$('settings').hidden=false;};
 $('g-close').onclick=()=>$('settings').hidden=true;
 $('settings').addEventListener('click',e=>{if(e.target.id==='settings')$('settings').hidden=true;});
-$('g-form').addEventListener('submit',e=>{e.preventDefault();const band=$('g-band').value.trim();if(band!==((state.meta&&state.meta.band)||'')){state.meta={band,u:Date.now()};saveLocal();renderBand();}sync.token=$('g-token').value.trim();sync.repo=$('g-repo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'')||'Shanedwyer312/setlist-data';saveSyncCfg();doSync();$('settings').hidden=true;toast(sync.token?'Saved. Syncing…':'Saved');});
+$('g-form').addEventListener('submit',e=>{e.preventDefault();const band=$('g-band').value.trim();if(band!==((state.meta&&state.meta.band)||'')){state.meta={band,u:Date.now()};saveLocal();renderBand();}sync.token=$('g-token').value.trim();sync.repo=$('g-repo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'')||(curBand==='main'?'Shanedwyer312/setlist-data':'');saveSyncCfg();doSync();$('settings').hidden=true;toast(sync.token?'Saved. Syncing…':'Saved');});
 $('g-remove').onclick=()=>{sync.token='';sync.last=0;saveSyncCfg();$('g-token').value='';setStatus('off');toast('Key removed from this device');};
 window.addEventListener('online',()=>doSync());
 window.addEventListener('offline',()=>setStatus('offline'));
