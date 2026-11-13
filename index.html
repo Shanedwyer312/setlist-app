@@ -104,7 +104,7 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .empty p{margin:0;max-width:34ch}
 
 /* Stage view */
-.stage{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.stage{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .sbar,.sfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-bottom:1px solid var(--line)}
 .sfoot{border-bottom:0;border-top:1px solid var(--line)}
 .sinfo{flex:1 1 220px;min-width:0;display:grid;gap:2px}
@@ -126,6 +126,31 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .snext b{color:var(--fg)}
 .snext .rt{color:var(--accent);font-weight:600}
 .sfoot .btn{min-height:48px;padding-inline:20px;font-size:16px;font-weight:600}
+.snotes{font-size:14px;color:var(--fg);opacity:.85}
+.drumbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-top:1px solid var(--line)}
+.bpmctl{display:flex;align-items:center;gap:6px}
+.bpmctl .btn{width:52px;height:52px;justify-content:center;font-size:24px;font-weight:600;padding:0}
+.bpmval{display:grid;justify-items:center;min-width:72px;line-height:1}
+.bpmval b{font-family:var(--font-mono);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums}
+.bpmval span{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.bpmval.gig span{color:var(--accent)}
+.dbtns{display:flex;gap:8px;flex:1 1 320px}
+.dbtn{flex:1;min-height:56px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);font-family:var(--font-display);font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.dbtn.go{background:var(--t-e);border-color:var(--t-e);color:var(--bg)}
+.dbtn.stop{background:var(--danger);border-color:var(--danger);color:var(--bg)}
+.dbtn:disabled{opacity:.4}
+.dmeta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);width:100%}
+.dmeta .ok{color:var(--t-e)} .dmeta .warn{color:var(--accent)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:600;font-size:13px;text-decoration:underline}
+.countin{position:fixed;inset:0;z-index:45;display:grid;place-items:center;pointer-events:none;background:color-mix(in srgb,var(--bg) 55%,transparent)}
+.countin b{font-family:var(--font-display);font-size:min(40vw,320px);font-weight:700;color:var(--accent);line-height:1}
+.bpmrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bpmrow .btn{min-height:40px}
+details.adv summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--muted)}
+.ccgrid{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 10px;align-items:center;font-size:14px;margin-top:10px}
+.ccgrid input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:16px}
+.ccgrid .h{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+label.f select{font-size:16px;letter-spacing:0;text-transform:none;font-weight:400;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
 .links{display:flex;gap:8px;flex-wrap:wrap}
 .links a{color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 #e-chart{font-family:var(--font-mono);font-size:14px;min-height:220px;white-space:pre;overflow-x:auto}
@@ -189,7 +214,10 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       <legend>Drums</legend>
       <label class="toggle"><input type="checkbox" id="e-drums"> Use HeadRush kick on this song</label>
       <div class="grid2">
-        <label class="f">BPM<input id="e-bpm" type="number" inputmode="numeric" min="40" max="250" placeholder="e.g. 84"></label>
+        <div class="f" style="display:grid;gap:5px"><label class="f" for="e-bpm" style="display:block">BPM</label>
+          <div class="bpmrow"><input id="e-bpm" type="number" inputmode="numeric" min="40" max="250" placeholder="e.g. 84" style="flex:1;min-width:0;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px">
+          <button type="button" class="btn" id="e-tap">Tap</button><a class="linkbtn" id="e-find-bpm" href="#" target="_blank" rel="noopener">Find BPM ↗</a></div>
+          <span class="hint" id="e-tap-hint">Play the song and tap along to set the BPM.</span></div>
         <label class="f">Rig #<input id="e-rig" type="number" inputmode="numeric" min="1" max="999" placeholder="Loads by Program Change"></label>
       </div>
       <label class="f">Drum note<input id="e-dnote" placeholder="Kick only, 4 on the floor"></label>
@@ -248,6 +276,24 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
     <label class="f">Access key<input id="g-token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></label>
     <label class="f">Data repo<input id="g-repo" autocapitalize="off" spellcheck="false"></label>
     <p class="hint" id="g-status"></p>
+    <fieldset>
+      <legend>HeadRush MIDI</legend>
+      <p class="hint">These settings stay on this device. MIDI works in Chrome on a computer, and on the iPad in the Web MIDI Browser app (Safari can't send MIDI).</p>
+      <div class="actions"><button type="button" class="btn" id="m-connect">Connect MIDI</button><span class="hint" id="m-status"></span></div>
+      <div class="grid2">
+        <label class="f">MIDI output<select id="m-out"></select></label>
+        <label class="f">MIDI channel<select id="m-ch"></select></label>
+        <label class="f">How to set tempo<select id="m-method"><option value="tap">Tap tempo (CC 64)</option><option value="clock">MIDI clock</option><option value="none">Don't send tempo</option></select></label>
+        <label class="f">Count-in<select id="m-count"><option value="0">None</option><option value="2">2 beats</option><option value="4">4 beats</option><option value="8">8 beats</option></select></label>
+      </div>
+      <label class="toggle"><input type="checkbox" id="m-rig"> Load the song's rig when it opens (Program Change)</label>
+      <label class="toggle"><input type="checkbox" id="m-scroll"> Start lyric scrolling with the drums</label>
+      <details class="adv"><summary>Advanced: drum MIDI messages</summary>
+        <p class="hint">Defaults follow the HeadRush manual. Change these only if test 5 shows a button needs a different message.</p>
+        <div class="ccgrid" id="m-map"></div>
+        <label class="toggle" style="margin-top:10px"><input type="checkbox" id="m-open"> Send “open drum machine” before Start</label>
+      </details>
+    </fieldset>
     <div class="actions">
       <button type="submit" class="btn primary">Save</button>
       <button type="button" class="btn" id="g-close">Close</button>
@@ -265,6 +311,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       <div class="spos" id="st-pos"></div>
       <div class="stitle" id="st-title"></div>
       <div class="meta" id="st-meta"></div>
+      <div class="snotes" id="st-notes" hidden></div>
     </div>
     <div class="sctl">
       <button class="btn" id="st-smaller" aria-label="Smaller text">A−</button>
@@ -278,6 +325,20 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
     </div>
   </div>
   <div class="sbody" id="st-body"></div>
+  <div class="drumbar" id="drumbar" hidden>
+    <div class="bpmctl">
+      <button class="btn" id="d-slower" aria-label="Slower">−</button>
+      <div class="bpmval" id="d-bpmbox"><b id="d-bpm">—</b><span id="d-bpmlabel">BPM</span></div>
+      <button class="btn" id="d-faster" aria-label="Faster">+</button>
+    </div>
+    <div class="dbtns">
+      <button class="dbtn go" id="d-start">Start</button>
+      <button class="dbtn" id="d-fill">Fill</button>
+      <button class="dbtn" id="d-end">End</button>
+      <button class="dbtn stop" id="d-stop">Stop</button>
+    </div>
+    <div class="dmeta"><span id="d-midi"></span><button class="linkbtn" id="d-reset" hidden>Back to song BPM</button><button class="linkbtn" id="d-default" hidden>Make this the song's BPM</button></div>
+  </div>
   <div class="sfoot">
     <button class="btn" id="st-prev">‹ Prev</button>
     <div class="snext" id="st-next"></div>
@@ -285,6 +346,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
   </div>
 </div>
 
+<div class="countin" id="countin" hidden><b id="countnum"></b></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -348,7 +410,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.2.0';
+const APP_VERSION='1.3.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -513,7 +575,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.edit) return openEditor(b.dataset.edit);
   if(b.dataset.open) return go('sets',b.dataset.open);
   const st=curSet();
-  if(st&&b.dataset.stage!==undefined) return openStage(st.ids.slice(),+b.dataset.stage);
+  if(st&&b.dataset.stage!==undefined) return openStage(st.ids.slice(),+b.dataset.stage,st.id);
   if(st&&(b.dataset.up||b.dataset.down)){
     const i=+(b.dataset.up||b.dataset.down),j=b.dataset.up?i-1:i+1;
     if(j<0||j>=st.ids.length)return;[st.ids[i],st.ids[j]]=[st.ids[j],st.ids[i]];touch(st);return commit();
@@ -530,7 +592,7 @@ document.addEventListener('click',e=>{
     case 'new-set':{const s={id:mkId('set'),name:'',date:today(),ids:[],u:Date.now()};state.sets.push(s);save();go('sets',s.id);setTimeout(()=>{const n=$('s-name');n&&n.focus();},50);return;}
     case 'back': return go('sets',null);
     case 'pick': return openPicker();
-    case 'play': if(!st.ids.length) return toast('Add songs to this setlist first.'); return openStage(st.ids.slice(),0);
+    case 'play': if(!st.ids.length) return toast('Add songs to this setlist first.'); return openStage(st.ids.slice(),0,st.id);
     case 'group':{const before=snap();const idx=new Map(st.ids.map((id,i)=>[id,i]));
       st.ids.sort((a,b)=>tuneCmp(song(a),song(b))||idx.get(a)-idx.get(b));touch(st);commit();return toast('Grouped by tuning',restore(before));}
     case 'dup-set':{const s={id:mkId('set'),name:(st.name||'Untitled gig')+' (copy)',date:st.date,ids:st.ids.slice(),u:Date.now()};state.sets.push(s);save();go('sets',s.id);return toast('Setlist duplicated');}
@@ -550,12 +612,21 @@ function openEditor(id){
   $('e-drums').checked=!!s.drums;$('e-bpm').value=s.bpm??'';$('e-rig').value=s.rig??'';
   $('e-dnote').value=s.dnote||'';$('e-notes').value=s.notes||'';
   $('e-chart').value=s.chart||'';$('e-chords').checked=s.chords!==false;
+  taps=[];$('e-tap-hint').textContent='Play the song and tap along to set the BPM.';
   updateLinks();
   $('e-delete').hidden=!id;$('editor').hidden=false;
 }
+let taps=[];
+$('e-tap').onclick=()=>{
+  const t=performance.now();if(taps.length&&t-taps[taps.length-1]>2000)taps=[];taps.push(t);if(taps.length>8)taps.shift();
+  if(taps.length<2){$('e-tap-hint').textContent='Keep tapping on the beat…';return;}
+  const iv=(taps[taps.length-1]-taps[0])/(taps.length-1);const bpm=Math.round(60000/iv);
+  if(bpm>=40&&bpm<=250){$('e-bpm').value=bpm;$('e-tap-hint').textContent=`${bpm} BPM from ${taps.length} taps. Keep tapping to refine.`;}
+};
 function updateLinks(){
   const q=($('e-title').value+' '+$('e-artist').value).trim();
   $('e-find-chords').href='https://www.ultimate-guitar.com/search.php?search_type=title&value='+encodeURIComponent(q);
+  $('e-find-bpm').href='https://www.google.com/search?q='+encodeURIComponent(q+' bpm tempo');
   $('e-find-lyrics').href='https://www.google.com/search?q='+encodeURIComponent(q+' lyrics');
 }
 $('e-title').addEventListener('input',updateLinks);$('e-artist').addEventListener('input',updateLinks);
@@ -600,17 +671,25 @@ function chartHTML(text,showChords){
 }
 const stg={ids:[],i:0,scrolling:false,speed:3,raf:0,lock:null,chordsOverride:null};
 try{const v=JSON.parse(localStorage.getItem('hsd-stage')||'null');if(v){stg.speed=v.speed||3;stg.size=v.size||24;}}catch(e){}
-stg.size=stg.size||24;
-const saveStg=()=>{try{localStorage.setItem('hsd-stage',JSON.stringify({speed:stg.speed,size:stg.size}));}catch(e){}};
-function openStage(ids,i){
+stg.size=stg.size||24;stg.defSpeed=stg.speed;stg.defSize=stg.size;
+const saveStg=()=>{
+  stg.defSpeed=stg.speed;stg.defSize=stg.size;
+  try{localStorage.setItem('hsd-stage',JSON.stringify({speed:stg.speed,size:stg.size}));}catch(e){}
+  const s=song(stg.ids[stg.i]);if(s){s.stage={speed:stg.speed,size:stg.size};touch(s);save();}
+};
+function openStage(ids,i,setId){
+  stg.set=setId||null;stg.lastOpened=null;
   stg.ids=ids.filter(song);if(!stg.ids.length)return;stg.i=Math.max(0,Math.min(i,stg.ids.length-1));
   $('stage').hidden=false;document.body.style.overflow='hidden';renderStage();
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>stg.lock=l,()=>{});}catch(e){}
 }
-function closeStage(){stopScroll();$('stage').hidden=true;document.body.style.overflow='';if(pendingReload){location.reload();return;}try{stg.lock&&stg.lock.release();}catch(e){}stg.lock=null;renderBody();}
+function closeStage(){stopScroll();drumsLeave();stopClock();$('stage').hidden=true;document.body.style.overflow='';if(pendingReload){location.reload();return;}try{stg.lock&&stg.lock.release();}catch(e){}stg.lock=null;renderBody();}
 function renderStage(){
   const s=song(stg.ids[stg.i]);if(!s){closeStage();return;}
   stopScroll();stg.chordsOverride=null;
+  const pref=s.stage||{};stg.speed=pref.speed||stg.defSpeed;stg.size=pref.size||stg.defSize;
+  const notes=[s.dnote,s.notes].filter(x=>x&&x.trim()).join(' · ');
+  $('st-notes').textContent=notes;$('st-notes').hidden=!notes;
   const n=stg.ids.length;
   $('st-pos').textContent=n>1?`Song ${stg.i+1} of ${n}`:'Song';
   $('st-title').textContent=s.title;
@@ -624,6 +703,8 @@ function renderStage(){
   $('st-prev').disabled=stg.i===0;$('st-nextbtn').disabled=stg.i>=n-1;
   $('st-speed').textContent=stg.speed;
   $('st-body').scrollTop=0;
+  renderDrums();
+  if(stg.lastOpened!==s.id){stg.lastOpened=s.id;songOpened(s);}
 }
 function drawChart(){
   const s=song(stg.ids[stg.i]);
@@ -649,8 +730,8 @@ function scrollTick(t0){
 function startScroll(){stg.scrolling=true;$('st-scroll').setAttribute('aria-pressed','true');$('st-scroll').textContent='Pause';scrollTick(performance.now());}
 function stopScroll(){stg.scrolling=false;cancelAnimationFrame(stg.raf);$('st-scroll').setAttribute('aria-pressed','false');$('st-scroll').textContent='Scroll';}
 $('st-close').onclick=closeStage;
-$('st-prev').onclick=()=>{if(stg.i>0){stg.i--;renderStage();}};
-$('st-nextbtn').onclick=()=>{if(stg.i<stg.ids.length-1){stg.i++;renderStage();}};
+$('st-prev').onclick=()=>{if(stg.i>0){drumsLeave();stg.i--;renderStage();}};
+$('st-nextbtn').onclick=()=>{if(stg.i<stg.ids.length-1){drumsLeave();stg.i++;renderStage();}};
 $('st-scroll').onclick=()=>stg.scrolling?stopScroll():startScroll();
 $('st-slower').onclick=()=>{stg.speed=Math.max(1,stg.speed-1);$('st-speed').textContent=stg.speed;saveStg();};
 $('st-faster').onclick=()=>{stg.speed=Math.min(15,stg.speed+1);$('st-speed').textContent=stg.speed;saveStg();};
@@ -740,6 +821,120 @@ $('b-load').onclick=()=>importText($('b-text').value);
 $('b-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>importText(String(r.result));r.readAsText(f);e.target.value='';};
 
 
+
+/* ---------- HeadRush MIDI ---------- */
+const MIDI_KEY='hsd-midi';
+const MAP_DEFAULT={start:[42,127],stop:[42,0],fill:[43,127],end:[45,127],open:[31,127]};
+const mcfg={enabled:false,outId:'',channel:1,method:'tap',count:4,rig:true,scroll:true,open:false,map:JSON.parse(JSON.stringify(MAP_DEFAULT))};
+try{const c=JSON.parse(localStorage.getItem(MIDI_KEY)||'null');if(c){Object.assign(mcfg,c);mcfg.map=Object.assign(JSON.parse(JSON.stringify(MAP_DEFAULT)),c.map||{});}}catch(e){}
+const saveMcfg=()=>{try{localStorage.setItem(MIDI_KEY,JSON.stringify(mcfg));}catch(e){}};
+const midi={access:null,out:null,status:'off'};
+async function midiConnect(){
+  if(!navigator.requestMIDIAccess){midi.status='unsupported';renderMidi();return;}
+  try{midi.access=await navigator.requestMIDIAccess({sysex:false});midi.access.onstatechange=pickOut;mcfg.enabled=true;saveMcfg();pickOut();}
+  catch(e){midi.status='denied';renderMidi();}
+}
+function pickOut(){
+  if(!midi.access)return;const outs=[...midi.access.outputs.values()];
+  midi.out=outs.find(o=>o.id===mcfg.outId)||outs[0]||null;midi.status=midi.out?'ok':'none';renderMidi();
+}
+function send(bytes,at){try{if(midi.out)midi.out.send(bytes,at);}catch(e){}}
+const chan=()=>((mcfg.channel|0)-1)&15;
+const sendCC=(pair,at)=>{if(pair&&pair[0]!=null&&pair[0]!=='')send([0xB0|chan(),(+pair[0])&127,(+pair[1])&127],at);};
+const sendPC=v=>send([0xC0|chan(),(+v)&127]);
+function midiText(){
+  return {ok:['ok','MIDI: '+(midi.out&&midi.out.name||'connected')],none:['warn','No MIDI device found. Plug in the cable.'],
+    unsupported:['warn',"This browser can't send MIDI. Use Chrome on a computer or Web MIDI Browser on the iPad."],
+    denied:['warn','MIDI was blocked. Allow it in the browser and tap Connect MIDI.'],off:['warn','MIDI not connected. Connect it in Settings.']}[midi.status];
+}
+function renderMidi(){
+  const [cls,txt]=midiText();
+  const d=$('d-midi');d.className=cls;d.textContent=txt;$('m-status').textContent=txt;
+  const sel=$('m-out');const outs=midi.access?[...midi.access.outputs.values()]:[];
+  sel.innerHTML=outs.length?outs.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join(''):'<option value="">None found</option>';
+  if(midi.out) sel.value=midi.out.id;
+}
+function fillMidiSettings(){
+  $('m-ch').innerHTML=Array.from({length:16},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
+  $('m-ch').value=mcfg.channel;$('m-method').value=mcfg.method;$('m-count').value=mcfg.count;
+  $('m-rig').checked=mcfg.rig;$('m-scroll').checked=mcfg.scroll;$('m-open').checked=mcfg.open;
+  const rows=[['start','Start'],['stop','Stop'],['fill','Fill'],['end','End (outro)'],['open','Open drum machine']];
+  $('m-map').innerHTML='<span class="h">Button</span><span class="h">CC number</span><span class="h">Value</span>'+rows.map(([k,l])=>
+    `<span>${l}</span><input type="number" min="0" max="127" inputmode="numeric" data-map="${k}" data-i="0" value="${mcfg.map[k][0]}" aria-label="${l} CC number"><input type="number" min="0" max="127" inputmode="numeric" data-map="${k}" data-i="1" value="${mcfg.map[k][1]}" aria-label="${l} value">`).join('');
+  renderMidi();
+}
+$('m-connect').onclick=midiConnect;
+$('m-out').onchange=e=>{mcfg.outId=e.target.value;saveMcfg();pickOut();};
+$('m-ch').onchange=e=>{mcfg.channel=+e.target.value;saveMcfg();};
+$('m-method').onchange=e=>{mcfg.method=e.target.value;saveMcfg();if(mcfg.method!=='clock')stopClock();};
+$('m-count').onchange=e=>{mcfg.count=+e.target.value;saveMcfg();};
+$('m-rig').onchange=e=>{mcfg.rig=e.target.checked;saveMcfg();};
+$('m-scroll').onchange=e=>{mcfg.scroll=e.target.checked;saveMcfg();};
+$('m-open').onchange=e=>{mcfg.open=e.target.checked;saveMcfg();};
+$('m-map').addEventListener('change',e=>{const k=e.target.dataset.map;if(!k)return;const v=Math.max(0,Math.min(127,parseInt(e.target.value,10)||0));mcfg.map[k][+e.target.dataset.i]=v;e.target.value=v;saveMcfg();});
+
+/* Tempo: tap (CC 64 on each beat) or MIDI clock (24 ticks per beat) */
+const clock={running:false,bpm:120,next:0,timer:0};
+function startClock(bpm){clock.bpm=bpm;if(clock.running)return;clock.running=true;clock.next=performance.now()+20;
+  clock.timer=setInterval(()=>{const ahead=performance.now()+100,iv=60000/(clock.bpm*24);while(clock.next<ahead){send([0xF8],clock.next);clock.next+=iv;}},25);}
+function stopClock(){clearInterval(clock.timer);clock.running=false;}
+function sendTempo(bpm,beats){
+  if(!bpm)return;
+  if(mcfg.method==='tap'){const iv=60000/bpm,t0=performance.now()+30;for(let k=0;k<(beats||4);k++)send([0xB0|chan(),64,127],t0+k*iv);}
+  else if(mcfg.method==='clock') startClock(bpm);
+}
+
+/* Drums on the stage screen */
+const drum={running:false,timers:[]};
+const curStageSet=()=>stg.set?state.sets.find(x=>x.id===stg.set):null;
+function effBpm(s){const st=curStageSet();return (st&&st.bpm&&st.bpm[s.id])||s.bpm||null;}
+function renderDrums(){
+  const s=song(stg.ids[stg.i]);const show=!!(s&&s.drums);$('drumbar').hidden=!show;if(!show)return;
+  const b=effBpm(s);const st=curStageSet();const gig=!!(st&&st.bpm&&st.bpm[s.id]&&st.bpm[s.id]!==s.bpm);
+  $('d-bpm').textContent=b||'—';$('d-bpmbox').classList.toggle('gig',gig);
+  $('d-bpmlabel').textContent=gig?'BPM this gig':'BPM';
+  $('d-reset').hidden=!gig;$('d-default').hidden=!gig;
+  $('d-start').disabled=drum.running;
+  renderMidi();
+}
+function songOpened(s){
+  if(!s.drums){stopClock();return;}
+  if(mcfg.rig&&s.rig!=null&&s.rig!=='') sendPC(s.rig);
+  const b=effBpm(s);
+  setTimeout(()=>{if(song(stg.ids[stg.i])===s) sendTempo(b);},250);
+}
+let bpmTimer=0;
+function setBpm(v){
+  const s=song(stg.ids[stg.i]);if(!s)return;v=Math.max(40,Math.min(250,v|0));
+  const st=curStageSet();
+  if(st){st.bpm=st.bpm||{};if(v===s.bpm)delete st.bpm[s.id];else st.bpm[s.id]=v;touch(st);}
+  else{s.bpm=v;touch(s);}
+  save();renderDrums();
+  clearTimeout(bpmTimer);bpmTimer=setTimeout(()=>sendTempo(v),350);
+}
+function clearCount(){drum.timers.forEach(clearTimeout);drum.timers=[];$('countin').hidden=true;}
+function drumsLeave(){clearCount();if(drum.running){sendCC(mcfg.map.stop);drum.running=false;}}
+$('d-slower').onclick=()=>{const s=song(stg.ids[stg.i]);setBpm((effBpm(s)||100)-1);};
+$('d-faster').onclick=()=>{const s=song(stg.ids[stg.i]);setBpm((effBpm(s)||100)+1);};
+$('d-reset').onclick=()=>{const s=song(stg.ids[stg.i]);const st=curStageSet();if(st&&st.bpm){delete st.bpm[s.id];touch(st);save();}renderDrums();sendTempo(s.bpm);};
+$('d-default').onclick=()=>{const s=song(stg.ids[stg.i]);const st=curStageSet();const b=effBpm(s);s.bpm=b;touch(s);if(st&&st.bpm){delete st.bpm[s.id];touch(st);}save();renderDrums();toast(`${s.title} is now ${b} BPM everywhere`);};
+$('d-start').onclick=()=>{
+  const s=song(stg.ids[stg.i]);if(!s||drum.running)return;
+  const b=effBpm(s);const beats=b?mcfg.count:0;const iv=b?60000/b:0;
+  drum.running=true;renderDrums();
+  if(mcfg.open) sendCC(mcfg.map.open);
+  if(beats&&mcfg.method==='tap') sendTempo(b,beats);   // the count-in taps also set the tempo
+  else if(b&&mcfg.method==='clock') startClock(b);
+  const go=()=>{$('countin').hidden=true;sendCC(mcfg.map.start);if(mcfg.scroll&&!stg.scrolling)startScroll();};
+  if(!beats){go();return;}
+  for(let k=0;k<beats;k++) drum.timers.push(setTimeout(()=>{$('countnum').textContent=k+1;$('countin').hidden=false;},30+k*iv));
+  drum.timers.push(setTimeout(go,30+beats*iv));
+};
+$('d-fill').onclick=()=>sendCC(mcfg.map.fill);
+$('d-end').onclick=()=>{clearCount();sendCC(mcfg.map.end);drum.running=false;renderDrums();};
+$('d-stop').onclick=()=>{clearCount();sendCC(mcfg.map.stop);drum.running=false;stopScroll();renderDrums();};
+if(mcfg.enabled&&navigator.requestMIDIAccess) midiConnect(); else {midi.status=navigator.requestMIDIAccess?'off':'unsupported';}
+
 /* ---------- Backup file ---------- */
 $('b-file-save').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,1)],{type:'application/json'});
@@ -821,7 +1016,7 @@ function renderSyncChip(){
   $('g-status').textContent=st[2]+(sync.last&&sync.status!=='ok'?' Last synced '+ago(sync.last)+'.':'');
 }
 setInterval(renderSyncChip,30000);
-$('syncchip').onclick=()=>{$('g-band').value=(state.meta&&state.meta.band)||'';$('g-token').value=sync.token;$('g-repo').value=sync.repo;$('g-version').textContent='App version '+APP_VERSION;renderSyncChip();$('settings').hidden=false;};
+$('syncchip').onclick=()=>{fillMidiSettings();$('g-band').value=(state.meta&&state.meta.band)||'';$('g-token').value=sync.token;$('g-repo').value=sync.repo;$('g-version').textContent='App version '+APP_VERSION;renderSyncChip();$('settings').hidden=false;};
 $('g-close').onclick=()=>$('settings').hidden=true;
 $('settings').addEventListener('click',e=>{if(e.target.id==='settings')$('settings').hidden=true;});
 $('g-form').addEventListener('submit',e=>{e.preventDefault();const band=$('g-band').value.trim();if(band!==((state.meta&&state.meta.band)||'')){state.meta={band,u:Date.now()};saveLocal();renderBand();}sync.token=$('g-token').value.trim();sync.repo=$('g-repo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'')||'Shanedwyer312/setlist-data';saveSyncCfg();doSync();$('settings').hidden=true;toast(sync.token?'Saved. Syncing…':'Saved');});
