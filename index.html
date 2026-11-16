@@ -449,7 +449,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
     </details>
     <details><summary>Bands</summary>
       <ul>
-        <li>Settings → <b>Bands</b> → type a name → <b>Add band</b>. Each band has its own songs, setlists and sync.</li>
+        <li>Settings → <b>Bands</b> → type a name → <b>Add band</b>. Each band has its own songs and setlists. A new band syncs to its own file in the same data repo with the same key, so there is nothing else to set up.</li>
         <li>Switch bands with the menu at the top.</li>
         <li>To share a band between people, use one private data repo for that band and give each person access. Each person enters their own key.</li>
       </ul>
@@ -587,7 +587,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.5.1';
+const APP_VERSION='1.5.2';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1247,8 +1247,13 @@ $('b-file-save').onclick=()=>{
 /* ---------- Sync with the private GitHub data repo ---------- */
 const SYNC_KEY='hsd-sync'+SFX;
 const sync={token:'',repo:curBand==='main'?'Shanedwyer312/setlist-data':'',path:'setlist.json',last:0,status:'off'};
+// A new band syncs to its own file (e.g. cooper-river-band.json) in the main data repo, using the same key, so it needs no extra setup.
+if(curBand!=='main'&&!localStorage.getItem(SYNC_KEY)){try{const m=JSON.parse(localStorage.getItem('hsd-sync')||'{}'),me=bands.find(b=>b.id===curBand);
+  const slug=((me&&me.name)||curBand).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||curBand;
+  if(m.token){sync.token=m.token;sync.repo=m.repo||'Shanedwyer312/setlist-data';sync.path=slug+'.json';}}catch(e){}}
 try{const c=JSON.parse(localStorage.getItem(SYNC_KEY)||'{}');['token','repo','path','last'].forEach(k=>{if(c[k])sync[k]=c[k];});}catch(e){}
 const saveSyncCfg=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify({token:sync.token,repo:sync.repo,path:sync.path,last:sync.last}));}catch(e){}};
+if(curBand!=='main'&&sync.token&&!localStorage.getItem(SYNC_KEY))saveSyncCfg();
 const b64enc=str=>{const b=new TextEncoder().encode(str);let bin='';for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin);};
 const b64dec=str=>{const bin=atob(str.replace(/\s/g,''));const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return new TextDecoder().decode(b);};
 const deviceName=()=>{const ua=navigator.userAgent;return /iPad/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document)?'iPad':/iPhone/.test(ua)?'iPhone':/Android/.test(ua)?'Android':/Windows/.test(ua)?'PC':'device';};

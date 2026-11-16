@@ -1,7 +1,7 @@
 // Setlist app — offline cache and auto-update.
 // Bump VERSION on every release: the browser sees the change when the app
 // opens online, installs the new files, and the page refreshes itself.
-const VERSION = '1.5.1';
+const VERSION = '1.5.2';
 const CACHE = 'hsd-app-' + VERSION;
 const FONT_CACHE = 'hsd-fonts';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
