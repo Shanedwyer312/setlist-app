@@ -587,7 +587,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.5.2';
+const APP_VERSION='1.5.3';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1252,6 +1252,9 @@ if(curBand!=='main'&&!localStorage.getItem(SYNC_KEY)){try{const m=JSON.parse(loc
   const slug=((me&&me.name)||curBand).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||curBand;
   if(m.token){sync.token=m.token;sync.repo=m.repo||'Shanedwyer312/setlist-data';sync.path=slug+'.json';}}catch(e){}}
 try{const c=JSON.parse(localStorage.getItem(SYNC_KEY)||'{}');['token','repo','path','last'].forEach(k=>{if(c[k])sync[k]=c[k];});}catch(e){}
+// Safety: a second band never syncs to the main band's file, even if its settings were saved before 1.5.2.
+if(curBand!=='main'&&(!sync.path||sync.path==='setlist.json')){const me=bands.find(b=>b.id===curBand);sync.path=(((me&&me.name)||curBand).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||curBand)+'.json';}
+if(curBand!=='main'&&!sync.token){try{const m=JSON.parse(localStorage.getItem('hsd-sync')||'{}');if(m.token){sync.token=m.token;if(!sync.repo)sync.repo=m.repo||'Shanedwyer312/setlist-data';}}catch(e){}}
 const saveSyncCfg=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify({token:sync.token,repo:sync.repo,path:sync.path,last:sync.last}));}catch(e){}};
 if(curBand!=='main'&&sync.token&&!localStorage.getItem(SYNC_KEY))saveSyncCfg();
 const b64enc=str=>{const b=new TextEncoder().encode(str);let bin='';for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin);};
