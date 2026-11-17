@@ -130,6 +130,8 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .tabv .tsys i{font-style:normal;color:var(--muted);opacity:.7}
 .tabv .tsys.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
 .tabv .tend{height:30vh}
+/* Tab page: plain lines are lyric cues, small and dim so the tab stays the focus */
+.tabv.tabpage .ll{font-family:var(--font-body);font-size:.7em;line-height:1.3;color:color-mix(in srgb,var(--fg) 72%,var(--bg));white-space:pre-wrap;margin-block:.1em}
 .tcur{position:absolute;left:0;top:0;bottom:0;width:3px;margin-left:-1px;border-radius:2px;background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 70%,transparent);pointer-events:none;will-change:transform}
 .tcur[data-pass]::after{content:attr(data-pass);position:absolute;left:7px;top:1px;font:600 12px var(--font-body);color:var(--accent);white-space:nowrap;background:var(--bg);padding:0 4px;border-radius:4px}
 .mmeasure{position:absolute;top:0;left:0;visibility:hidden;white-space:pre;pointer-events:none}
@@ -278,7 +280,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
         <button type="button" data-ep="sheet" data-label="Sheet" aria-pressed="false">Sheet</button>
       </div>
       <div class="epane" data-pane="tab" hidden>
-        <p class="hint">Plays in time with the song's BPM (set above). Put <b>|</b> between bars so the app knows how long each line lasts. Add <b>x2</b> after a line that repeats.</p>
+        <p class="hint">Plays in time with the song's BPM (set above). Put <b>|</b> between bars so the app knows how long each line lasts. Add <b>x2</b> after a line that repeats. Any other line shows as a small lyric cue, so put lyrics right above the staff they go with.</p>
         <div class="links"><a id="e-find-tabs" href="#" target="_blank" rel="noopener">Find tabs on Ultimate Guitar ↗</a></div>
         <label class="f">Tab<textarea id="e-tab" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="Paste a tab, or tap Add bass staff and type the frets in.&#10;[Verse], [Chorus] lines become section labels."></textarea></label>
         <div class="actions"><button type="button" class="btn" data-staff="bass" data-into="e-tab">Add bass staff</button><button type="button" class="btn" data-staff="gtr" data-into="e-tab">Add guitar staff</button><span class="spacer"></span>
@@ -440,7 +442,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
         <li><b>Songs</b> is the master list. Tap a song to edit it. Changes show up in every setlist that uses it.</li>
         <li><b>Tuning</b> drives the retune warnings. Write it like E, Eb, Drop D, Drop Db or Capo 2.</li>
         <li><b>Charts</b> has three pages per song. Fill in any of them:
-          <br><b>Tab</b> plays in time with the song's BPM. Put <b>|</b> between bars, since the app times each line by counting its bars. Add <b>x2</b> (or x3, x4) after a line that repeats. Set <b>Beats per bar</b> if the song isn't in 4.
+          <br><b>Tab</b> plays in time with the song's BPM. Put <b>|</b> between bars, since the app times each line by counting its bars. Add <b>x2</b> (or x3, x4) after a line that repeats. Any plain line shows as a small lyric cue, so put lyrics right above the staff they go with. Set <b>Beats per bar</b> if the song isn't in 4.
           <br><b>Lyrics</b>: paste lyrics, or a chord chart with chords on the line above the words. Turn off <b>Show chords on stage</b> for lyrics-only songs.
           <br><b>Sheet</b> is a page that doesn't scroll, for riffs, lyrics or reminders.
           <br><b>Add bass staff</b> drops in four empty bars to type frets into. Lines like [Chorus] become section labels on every page.</li>
@@ -615,12 +617,14 @@ A|----------------|5---5---5---5---|----------------|3---3---2---2---|
 E|3---3---3---3---|----------------|0---0---0---2---|----------------| x2
 
 [Verse]
+Load the car up, coil the cables tight / Setlist taped to the mic stand tonight
 G|----------------|----------------|----------------|----------------|
 D|----------------|----------------|----------------|----------------|
 A|----------------|5---5---5---5---|----------------|3---3---2---2---|
 E|3---3---3---3---|----------------|0---0---0---2---|----------------| x2
 
 [Chorus]
+Half a step down, let the low string ring
 G|----------------|----------------|----------------|----------------|
 D|----------------|----------------|----------------|----------------|
 A|----------------|5-5-5-5-5-5-5-5-|----------------|3-3-3-3-3-3-3-3-|
@@ -657,7 +661,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.6.0';
+const APP_VERSION='1.6.1';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1099,7 +1103,7 @@ function drawChart(){
   const pref=s.stage||{};
   stg.vsize=(v==='tab'?pref.tabSize:pref.sheetSize)||fitSize(P.maxCols);
   tab.info=v==='tab'?P.info:[];
-  $('st-body').innerHTML=`<div class="chart tabv" style="--chart-size:${stg.vsize}px">${v==='tab'?'<div class="tspace"></div>':''}<span class="mmeasure" aria-hidden="true">0000000000</span>${P.html}${v==='tab'?'<div class="tend"></div>':''}</div>`;
+  $('st-body').innerHTML=`<div class="chart tabv${v==='tab'?' tabpage':''}" style="--chart-size:${stg.vsize}px">${v==='tab'?'<div class="tspace"></div>':''}<span class="mmeasure" aria-hidden="true">0000000000</span>${P.html}${v==='tab'?'<div class="tend"></div>':''}</div>`;
   if(v==='tab'){measureTab();tabDraw(tab.beat,tab.on);} else tab.tl=null;
 }
 
