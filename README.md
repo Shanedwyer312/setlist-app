@@ -5,6 +5,7 @@ A setlist, lyrics and stage app for acoustic gigs, built to run on an iPad on th
 - **Songs**: the master song list (title, artist, tuning, drum BPM and HeadRush rig number, lyrics or chord chart).
 - **Setlists**: one per gig, built by picking songs from the master list, with retune warnings between songs.
 - **Stage view**: full-screen lyrics and chords with auto-scroll, text size, and next-song and retune warnings. Works with a Bluetooth page-turner (up/down scroll, left/right change song).
+- **Three pages per song**: **Tab** plays in time with the song's BPM. It scrolls continuously with the current line held a third of the way down, and a cursor moves bar by bar. **Lyrics** auto-scrolls. **Sheet** is a static page for riffs and notes. Each song can choose which page it opens to.
 
 ## Install on an iPad
 

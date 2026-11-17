@@ -124,6 +124,18 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .chart .ic{color:var(--accent);font-family:var(--font-mono);font-weight:600;font-size:.8em;vertical-align:.35em;margin-inline:1px}
 .chart .sec{font-family:var(--font-display);font-size:.7em;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.9em}
 .chart .gap{height:.7em}
+/* Tab and Sheet views: fixed-width text so tab lines line up; tab systems never wrap */
+.chart.tabv{font-family:var(--font-mono);font-size:var(--chart-size,20px);line-height:1.3;white-space:pre-wrap;overflow-wrap:normal;max-width:none;position:relative;overflow-x:auto;padding-bottom:4px}
+.tabv .tsys{white-space:pre;position:relative;width:max-content;min-width:100%;margin-block:.2em;padding-block:.1em;border-radius:6px;transition:background-color .3s}
+.tabv .tsys i{font-style:normal;color:var(--muted);opacity:.7}
+.tabv .tsys.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.tabv .tend{height:30vh}
+.tcur{position:absolute;left:0;top:0;bottom:0;width:3px;margin-left:-1px;border-radius:2px;background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 70%,transparent);pointer-events:none;will-change:transform}
+.tcur[data-pass]::after{content:attr(data-pass);position:absolute;left:7px;top:1px;font:600 12px var(--font-body);color:var(--accent);white-space:nowrap;background:var(--bg);padding:0 4px;border-radius:4px}
+.mmeasure{position:absolute;top:0;left:0;visibility:hidden;white-space:pre;pointer-events:none}
+.sbar .seg button{min-height:40px;padding:8px 14px}
+.epane{display:grid;gap:12px}
+#e-panes button{min-width:76px}
 .snone{max-width:44ch;margin:10vh auto 0;text-align:center;color:var(--muted);display:grid;gap:14px;justify-items:center}
 .snext{flex:1;min-width:0;text-align:center;font-size:15px;color:var(--muted)}
 .snext b{color:var(--fg)}
@@ -171,7 +183,7 @@ details.adv summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--mu
 label.f select{font-size:16px;letter-spacing:0;text-transform:none;font-weight:400;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
 .links{display:flex;gap:8px;flex-wrap:wrap}
 .links a{color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
-#e-chart{font-family:var(--font-mono);font-size:14px;min-height:220px;white-space:pre;overflow-x:auto}
+#e-chart,#e-tab,#e-sheet{font-family:var(--font-mono);font-size:14px;min-height:240px;white-space:pre;overflow-x:auto}
 
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .sheet{width:100%;max-width:640px;max-height:92%;overflow:auto;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;padding:20px max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));display:grid;gap:16px}
@@ -241,7 +253,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       <label class="f">Original tuning<input id="e-og"></label>
     </div>
     <fieldset>
-      <legend>Drums</legend>
+      <legend>Tempo &amp; drums</legend>
       <label class="toggle"><input type="checkbox" id="e-drums"> Use HeadRush kick on this song</label>
       <div class="grid2">
         <div class="f" style="display:grid;gap:5px"><label class="f" for="e-bpm" style="display:block">BPM</label>
@@ -259,10 +271,30 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       <div class="trackrow"><span class="tname" id="e-click-name">No click file (optional, for in-ears)</span><label class="btn" for="e-click-file">Choose click…</label><input type="file" id="e-click-file" accept="audio/*,.mp3,.m4a,.wav,.aac" hidden><button type="button" class="btn danger" id="e-click-rm" hidden>Remove</button></div>
     </fieldset>
     <fieldset>
-      <legend>Lyrics &amp; chords</legend>
-      <div class="links"><a id="e-find-chords" href="#" target="_blank" rel="noopener">Find chords on Ultimate Guitar ↗</a><a id="e-find-lyrics" href="#" target="_blank" rel="noopener">Find lyrics ↗</a></div>
-      <label class="f">Chart<textarea id="e-chart" spellcheck="false" placeholder="Paste lyrics, or a chord chart with chords on the line above the words.&#10;[Verse], [Chorus] lines become section labels. ChordPro [G] chords work too."></textarea></label>
-      <label class="toggle"><input type="checkbox" id="e-chords"> Show chords on stage</label>
+      <legend>Charts</legend>
+      <div class="seg" role="group" aria-label="Chart" id="e-panes">
+        <button type="button" data-ep="tab" data-label="Tab" aria-pressed="false">Tab</button>
+        <button type="button" data-ep="lyrics" data-label="Lyrics" aria-pressed="true">Lyrics</button>
+        <button type="button" data-ep="sheet" data-label="Sheet" aria-pressed="false">Sheet</button>
+      </div>
+      <div class="epane" data-pane="tab" hidden>
+        <p class="hint">Plays in time with the song's BPM (set above). Put <b>|</b> between bars so the app knows how long each line lasts. Add <b>x2</b> after a line that repeats.</p>
+        <div class="links"><a id="e-find-tabs" href="#" target="_blank" rel="noopener">Find tabs on Ultimate Guitar ↗</a></div>
+        <label class="f">Tab<textarea id="e-tab" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="Paste a tab, or tap Add bass staff and type the frets in.&#10;[Verse], [Chorus] lines become section labels."></textarea></label>
+        <div class="actions"><button type="button" class="btn" data-staff="bass" data-into="e-tab">Add bass staff</button><button type="button" class="btn" data-staff="gtr" data-into="e-tab">Add guitar staff</button><span class="spacer"></span>
+          <label class="f" style="grid-auto-flow:column;align-items:center;gap:8px">Beats per bar<select id="e-bpb" style="width:auto"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option></select></label></div>
+      </div>
+      <div class="epane" data-pane="lyrics">
+        <div class="links"><a id="e-find-chords" href="#" target="_blank" rel="noopener">Find chords on Ultimate Guitar ↗</a><a id="e-find-lyrics" href="#" target="_blank" rel="noopener">Find lyrics ↗</a></div>
+        <label class="f">Lyrics<textarea id="e-chart" spellcheck="false" placeholder="Paste lyrics, or a chord chart with chords on the line above the words.&#10;[Verse], [Chorus] lines become section labels. ChordPro [G] chords work too."></textarea></label>
+        <label class="toggle"><input type="checkbox" id="e-chords"> Show chords on stage</label>
+      </div>
+      <div class="epane" data-pane="sheet" hidden>
+        <p class="hint">A page that stays put: riffs, lyrics, reminders, or all three. Tab lines keep their spacing.</p>
+        <label class="f">Sheet<textarea id="e-sheet" spellcheck="false" autocapitalize="off" placeholder="[Main riff]&#10;G|----------------|&#10;D|----------------|&#10;A|----------------|&#10;E|3---3---3---3---|"></textarea></label>
+        <div class="actions"><button type="button" class="btn" data-staff="bass" data-into="e-sheet">Add bass staff</button><button type="button" class="btn" data-staff="gtr" data-into="e-sheet">Add guitar staff</button></div>
+      </div>
+      <label class="f">Opens to<select id="e-view"><option value="">Automatic (Lyrics, else Tab, else Sheet)</option><option value="tab">Tab</option><option value="lyrics">Lyrics</option><option value="sheet">Sheet</option></select></label>
     </fieldset>
     <label class="f">Notes<textarea id="e-notes"></textarea></label>
     <div class="actions">
@@ -407,7 +439,12 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       <ul>
         <li><b>Songs</b> is the master list. Tap a song to edit it. Changes show up in every setlist that uses it.</li>
         <li><b>Tuning</b> drives the retune warnings. Write it like E, Eb, Drop D, Drop Db or Capo 2.</li>
-        <li><b>Lyrics &amp; chords:</b> paste lyrics, or a chord chart with chords on the line above the words. Lines like [Chorus] become section labels. Use the Find links to look up charts. Turn off <b>Show chords on stage</b> for lyrics-only songs.</li>
+        <li><b>Charts</b> has three pages per song. Fill in any of them:
+          <br><b>Tab</b> plays in time with the song's BPM. Put <b>|</b> between bars, since the app times each line by counting its bars. Add <b>x2</b> (or x3, x4) after a line that repeats. Set <b>Beats per bar</b> if the song isn't in 4.
+          <br><b>Lyrics</b>: paste lyrics, or a chord chart with chords on the line above the words. Turn off <b>Show chords on stage</b> for lyrics-only songs.
+          <br><b>Sheet</b> is a page that doesn't scroll, for riffs, lyrics or reminders.
+          <br><b>Add bass staff</b> drops in four empty bars to type frets into. Lines like [Chorus] become section labels on every page.</li>
+        <li><b>Opens to</b> picks which page shows first on stage. Automatic opens Lyrics if there are any, then Tab, then Sheet.</li>
         <li><b>Notes</b> show under the song title on stage (e.g. “capo off, Brian starts”).</li>
       </ul>
     </details>
@@ -423,7 +460,10 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
     <details><summary>On stage</summary>
       <ul>
         <li>Tap <b>▶ Play set</b>, or tap any song in a setlist, to open it full screen.</li>
-        <li><b>Scroll</b> starts auto-scroll. − / + next to it change the speed. Tap the lyrics to pause.</li>
+        <li>If a song has more than one page, switch between <b>Tab</b>, <b>Lyrics</b> and <b>Sheet</b> at the top.</li>
+        <li><b>Lyrics:</b> <b>Scroll</b> starts auto-scroll. − / + next to it change the speed. Tap the lyrics to pause.</li>
+        <li><b>Tab:</b> <b>Play</b> counts in, then scrolls in time. The line you're on stays a third of the way down the screen, and a cursor moves through each bar. − / + change the BPM. Tap the tab to pause, drag to any spot, and Play picks up from the bar at the cursor. With drums, Start runs the drums and the tab together. A page-turner jumps to the next or previous line while it's playing.</li>
+        <li><b>Sheet</b> stays put. Use A− / A+ to size it.</li>
         <li><b>A− / A+</b> change the text size. Speed and size are remembered for each song.</li>
         <li><b>Next ›</b> shows what's next and warns you if you need to retune.</li>
         <li>A Bluetooth page-turner works too. Up/down scrolls, left/right changes song.</li>
@@ -475,6 +515,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       <div class="meta" id="st-meta"></div>
       <div class="snotes" id="st-notes" hidden></div>
     </div>
+    <div class="seg" role="group" aria-label="View" id="st-views" hidden></div>
     <div class="sctl">
       <button class="btn" id="st-smaller" aria-label="Smaller text">A−</button>
       <button class="btn" id="st-bigger" aria-label="Bigger text">A+</button>
@@ -567,8 +608,37 @@ G                D
 Kick drum steady underneath my feet
 Em                  C
 Counting four and holding to the beat`;
+const DEMO_TAB=`[Intro]
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|5---5---5---5---|----------------|3---3---2---2---|
+E|3---3---3---3---|----------------|0---0---0---2---|----------------| x2
+
+[Verse]
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|5---5---5---5---|----------------|3---3---2---2---|
+E|3---3---3---3---|----------------|0---0---0---2---|----------------| x2
+
+[Chorus]
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|5-5-5-5-5-5-5-5-|----------------|3-3-3-3-3-3-3-3-|
+E|3-3-3-3-3-3-3-3-|----------------|0-0-0-0-0-0-0-0-|----------------|
+G|----------------|----------------|----------------|
+D|----------------|----------------|----------------|
+A|----------------|5-5-5-5-5-5-5-5-|3-3-3-3-3-3-3-3-|
+E|3-3-3-3-3-3-3-3-|----------------|----------------|`;
+const DEMO_SHEET=`[Main riff] under the intro and verses
+G|----------------|----------------|
+D|----------------|----------------|
+A|----------------|5---5---5---5---|
+E|3---3---3---3---|----------------|
+
+[Chorus] same notes, straight eighths
+Ending: hold the G, watch for the cutoff`;
 function demoData(){
-  const songs=[{id:'demo-sample',title:'Sample Song',artist:'Demo chart (original words)',tuning:'Eb',og:'',drums:true,bpm:92,rig:1,dnote:'Kick only, 4 on the floor',notes:'Example chart so you can try the stage view.',chart:DEMO_CHART,chords:true,u:0}]
+  const songs=[{id:'demo-sample',title:'Sample Song',artist:'Demo chart (original words)',tuning:'Eb',og:'',drums:true,bpm:92,rig:1,dnote:'Kick only, 4 on the floor',notes:'Example chart so you can try the stage view.',chart:DEMO_CHART,chords:true,tab:DEMO_TAB,sheet:DEMO_SHEET,bpb:4,view:'tab',u:0}]
     .concat(DEMO_SONGS.map((r,i)=>({id:'demo'+i,title:r[0],artist:r[1],tuning:r[2],og:r[3],drums:false,bpm:null,rig:null,dnote:'',notes:'',chart:'',chords:true,u:0})));
   const pick=[0,1,9,4,12,2,15,8,24,21,18,7,17].map(i=>i===0?'demo-sample':'demo'+(i-1));
   return {v:3,deleted:{},meta:{band:'Half Step Down',u:0},songs,sets:[{id:'demo-set',name:'Example gig',date:'',ids:pick,u:0}]};
@@ -587,7 +657,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.5.3';
+const APP_VERSION='1.6.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -629,6 +699,7 @@ function metaHTML(s){
   const t=tune(s.tuning);
   const m=[`<span>${esc(s.artist)}</span>`,`<span class="chip t-${t.cls}"><span class="dot"></span>${esc(s.tuning||'—')}</span>`];
   if(s.og) m.push(`<span class="og">orig. ${esc(s.og)}</span>`);
+  if(s.tab&&s.tab.trim()) m.push(`<span class="drum">TAB</span>`);
   if(s.track) m.push(`<span class="drum">TRACK ${s.track.dur?fmtTime(s.track.dur):''}</span>`);
   if(s.drums) m.push(`<span class="drum">KICK ${s.bpm?esc(s.bpm)+' BPM':'· set BPM'}${s.rig?' · RIG '+esc(s.rig):''}</span>`);
   return m.join('');
@@ -794,6 +865,8 @@ function openEditor(id){
   $('e-drums').checked=!!s.drums;$('e-bpm').value=s.bpm??'';$('e-rig').value=s.rig??'';
   $('e-dnote').value=s.dnote||'';$('e-notes').value=s.notes||'';
   $('e-chart').value=s.chart||'';$('e-chords').checked=s.chords!==false;
+  $('e-tab').value=s.tab||'';$('e-sheet').value=s.sheet||'';$('e-tab')._caret=$('e-sheet')._caret=null;$('e-bpb').value=String(s.bpb||4);$('e-view').value=s.view||'';
+  setPane(id?startView(s):'lyrics');paneMarks();
   pend={track:undefined,click:undefined};showTrackFields(s);
   taps=[];$('e-tap-hint').textContent='Play the song and tap along to set the BPM.';
   updateLinks();
@@ -811,7 +884,29 @@ function updateLinks(){
   $('e-find-chords').href='https://www.ultimate-guitar.com/search.php?search_type=title&value='+encodeURIComponent(q);
   $('e-find-bpm').href='https://www.google.com/search?q='+encodeURIComponent(q+' bpm tempo');
   $('e-find-lyrics').href='https://www.google.com/search?q='+encodeURIComponent(q+' lyrics');
+  $('e-find-tabs').href='https://www.ultimate-guitar.com/search.php?search_type=title&value='+encodeURIComponent(q+' bass');
 }
+/* Chart panes in the editor: Tab / Lyrics / Sheet */
+function setPane(p){
+  document.querySelectorAll('#e-panes [data-ep]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ep===p));
+  document.querySelectorAll('.epane').forEach(d=>d.hidden=d.dataset.pane!==p);
+}
+function paneMarks(){
+  const has={tab:$('e-tab').value.trim(),lyrics:$('e-chart').value.trim(),sheet:$('e-sheet').value.trim()};
+  document.querySelectorAll('#e-panes [data-ep]').forEach(b=>{b.textContent=b.dataset.label+(has[b.dataset.ep]?' •':'');});
+}
+$('e-panes').addEventListener('click',e=>{const b=e.target.closest('[data-ep]');if(b)setPane(b.dataset.ep);});
+['e-tab','e-chart','e-sheet'].forEach(id=>{$(id).addEventListener('input',paneMarks);$(id).addEventListener('blur',e=>{e.target._caret=e.target.selectionStart;});});
+const STAFF={bass:['G','D','A','E'],gtr:['e','B','G','D','A','E']};
+document.querySelectorAll('[data-staff]').forEach(b=>b.addEventListener('click',()=>{
+  const ta=$(b.dataset.into),bar='----------------|';
+  const block=STAFF[b.dataset.staff].map(n=>n+'|'+bar.repeat(4)).join('\n');
+  const v=ta.value,pos=ta._caret!=null&&ta._caret<=v.length?ta._caret:v.length;
+  const before=v.slice(0,pos),after=v.slice(pos);
+  const pre=before&&!before.endsWith('\n\n')?(before.endsWith('\n')?'\n':'\n\n'):'';
+  ta.value=before+pre+block+'\n'+after;ta.focus();
+  const at=(before+pre).length+STAFF[b.dataset.staff][0].length+2;ta.setSelectionRange(at,at);paneMarks();
+}));
 $('e-title').addEventListener('input',updateLinks);$('e-artist').addEventListener('input',updateLinks);
 const closeEditor=()=>{$('editor').hidden=true;editing=null;if(pendingReload&&$('stage').hidden)location.reload();};
 $('e-cancel').onclick=closeEditor;
@@ -820,7 +915,8 @@ function saveEditor(){
   const num=v=>{const n=parseInt(v,10);return Number.isFinite(n)?n:null;};
   const data={title:$('e-title').value.trim(),artist:$('e-artist').value.trim(),tuning:$('e-tuning').value.trim(),og:$('e-og').value.trim(),
     drums:$('e-drums').checked,bpm:num($('e-bpm').value),rig:num($('e-rig').value),dnote:$('e-dnote').value.trim(),notes:$('e-notes').value,
-    chart:$('e-chart').value.replace(/\s+$/,''),chords:$('e-chords').checked};
+    chart:$('e-chart').value.replace(/\s+$/,''),chords:$('e-chords').checked,
+    tab:$('e-tab').value.replace(/\s+$/,''),sheet:$('e-sheet').value.replace(/\s+$/,''),bpb:+$('e-bpb').value||4,view:$('e-view').value};
   const prev=editing?song(editing):{};
   ['track','click'].forEach(k=>{data[k]=pend[k]===undefined?(prev[k]||null):pend[k]?{name:pend[k].name,size:pend[k].size,dur:pend[k].dur||0}:null;});
   if(!data.title){$('e-title').focus();return null;}
@@ -856,31 +952,106 @@ function chartHTML(text,showChords){
   });
   return {html:out.join(''),mono:showChords&&hasChordLines};
 }
-const stg={ids:[],i:0,scrolling:false,speed:3,raf:0,lock:null,chordsOverride:null};
+const stg={ids:[],i:0,scrolling:false,speed:3,raf:0,lock:null,chordsOverride:null,view:'lyrics',vsize:20};
 try{const v=JSON.parse(localStorage.getItem('hsd-stage')||'null');if(v){stg.speed=v.speed||3;stg.size=v.size||24;}}catch(e){}
 stg.size=stg.size||24;stg.defSpeed=stg.speed;stg.defSize=stg.size;
 const saveStg=()=>{
-  stg.defSpeed=stg.speed;stg.defSize=stg.size;
-  try{localStorage.setItem('hsd-stage',JSON.stringify({speed:stg.speed,size:stg.size}));}catch(e){}
-  const s=song(stg.ids[stg.i]);if(s){s.stage={speed:stg.speed,size:stg.size};touch(s);save();}
+  if(stg.view==='lyrics'){stg.defSpeed=stg.speed;stg.defSize=stg.size;
+    try{localStorage.setItem('hsd-stage',JSON.stringify({speed:stg.speed,size:stg.size}));}catch(e){}}
+  const s=song(stg.ids[stg.i]);if(!s)return;
+  const p=Object.assign({},s.stage||{});
+  if(stg.view==='lyrics'){p.speed=stg.speed;p.size=stg.size;}
+  else if(stg.view==='tab') p.tabSize=stg.vsize; else p.sheetSize=stg.vsize;
+  s.stage=p;touch(s);save();
 };
+
+/* Pages per song: Tab (plays in time), Lyrics (auto-scroll), Sheet (static) */
+const VIEWS=[['tab','Tab'],['lyrics','Lyrics'],['sheet','Sheet']];
+const viewText=(s,v)=>String((v==='tab'?s.tab:v==='sheet'?s.sheet:s.chart)||'');
+const hasView=(s,v)=>/\S/.test(viewText(s,v));
+const songViews=s=>VIEWS.map(v=>v[0]).filter(v=>hasView(s,v));
+function startView(s){
+  if(s.view&&hasView(s,s.view)) return s.view;
+  if(hasView(s,'lyrics')) return 'lyrics';
+  return songViews(s)[0]||'lyrics';
+}
+
+/* Tab parsing: consecutive staff lines (G|---3---|) form one "system".
+   Each system lasts (bars × beats per bar × repeats) beats. */
+const isTabLine=l=>{const t=l.trim();if(!/\|/.test(t)||(t.match(/-/g)||[]).length<3)return false;
+  if(!/^([A-Ga-g][#b]?\s?)?[|:]/.test(t))return false;
+  return !/[a-wyz]{3,}/i.test(t.replace(/^[A-Ga-g][#b]?/,'').replace(/\|[^|]*$/,''));};
+const REP=/(?:^|[\s(|])(?:x\s?(\d{1,2})|(\d{1,2})\s?x)(?=$|[\s)])/i;
+const REP_LINE=/^\s*\(?\s*(?:repeat\s*)?(?:x\s?(\d{1,2})|(\d{1,2})\s?x)\s*\)?\s*$/i;
+function sysInfo(lines){
+  const L=lines.reduce((a,b)=>b.replace(/\s+$/,'').length>a.length?b.replace(/\s+$/,''):a,'');
+  let reps=1;
+  lines.forEach(l=>{const i=l.lastIndexOf('|');const m=(i>=0?l.slice(i):'').match(REP);if(m)reps=Math.max(reps,+(m[1]||m[2])||1);});
+  const lab=(L.match(/^\s*[A-Ga-g][#b]?\s?/)||[''])[0].length;
+  const pipes=[];for(let i=0;i<L.length;i++){if(L[i]==='|'&&L[i-1]!=='|')pipes.push(i);}
+  let cols=pipes.slice();
+  if(!cols.length||cols[0]>lab+1) cols.unshift(lab);
+  const last=cols[cols.length-1];const tail=L.slice(last+1).replace(REP,'');
+  if((tail.match(/[-0-9]/g)||[]).length>=3){const j=tail.search(/[-0-9][^-0-9]*$/);cols.push(last+2+j);}
+  cols=cols.filter((c,i)=>i===0||c-cols[i-1]>1);
+  let bars=cols.length-1;
+  const span=bars>=1?cols[cols.length-1]-cols[0]:0;
+  if(bars<1||(bars===1&&(pipes.length<=1||span>56))){
+    const a=cols[0],b=bars>=1?cols[cols.length-1]:Math.max(a+1,L.length);
+    bars=Math.max(1,Math.round((b-a)/16));cols=Array.from({length:bars+1},(_,k)=>a+(b-a)*k/bars);
+  }
+  return {bars,reps,cols,width:L.length};
+}
+function parseMono(text){
+  const lines=String(text||'').replace(/\r/g,'').replace(/\t/g,'    ').split('\n');
+  const out=[],info=[];let maxCols=0,i=0;
+  const tabLineHTML=l=>esc(l).replace(/-+/g,m=>'<i>'+m+'</i>');
+  while(i<lines.length){
+    const line=lines[i];
+    if(isTabLine(line)){
+      const grp=[],seen=new Set();const lab=l=>(l.trim().match(/^([A-Ga-g][#b]?)\s?[|:]/)||[])[1];
+      while(i<lines.length&&isTabLine(lines[i])){const lb=lab(lines[i]);if(lb&&seen.has(lb))break;if(lb)seen.add(lb);grp.push(lines[i]);i++;}
+      const inf=sysInfo(grp);
+      const nx=lines[i];const rm=nx!=null&&nx.match(REP_LINE);if(rm)inf.reps=Math.max(inf.reps,+(rm[1]||rm[2])||1);
+      maxCols=Math.max(maxCols,inf.width);
+      out.push(`<div class="tsys" data-k="${info.length}">${grp.map(l=>`<div>${tabLineHTML(l)}</div>`).join('')}</div>`);info.push(inf);
+      continue;
+    }
+    const sec=line.match(/^\s*\[([^\]]+)\]\s*(.*)$/);
+    if(sec&&!CHORD.test(sec[1].trim())) out.push(`<div class="sec">${esc(sec[1])}${sec[2]?`<span style="text-transform:none;letter-spacing:0"> ${esc(sec[2])}</span>`:''}</div>`);
+    else if(!line.trim()) out.push('<div class="gap"></div>');
+    else if(isChordLine(line)) out.push(`<div class="cl">${esc(line)}</div>`);
+    else out.push(`<div class="ll">${esc(line)}</div>`);
+    i++;
+  }
+  return {html:out.join(''),info,maxCols};
+}
+function fitSize(cols){
+  if(!cols) return 22;
+  const w=$('st-body').clientWidth-48;
+  return Math.max(12,Math.min(30,Math.floor(w/(cols*0.6))));
+}
+
 function openStage(ids,i,setId){
   stg.set=setId||null;stg.lastOpened=null;
   stg.ids=ids.filter(song);if(!stg.ids.length)return;stg.i=Math.max(0,Math.min(i,stg.ids.length-1));
   $('stage').hidden=false;document.body.style.overflow='hidden';renderStage();
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>stg.lock=l,()=>{});}catch(e){}
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{if(!$('stage').hidden&&stg.view==='tab'){measureTab();tabDraw(tab.beat,tab.on);}});
 }
 function closeStage(){stopScroll();drumsLeave();stopClock();$('stage').hidden=true;document.body.style.overflow='';if(pendingReload){location.reload();return;}try{stg.lock&&stg.lock.release();}catch(e){}stg.lock=null;renderBody();}
 function renderStage(){
   const s=song(stg.ids[stg.i]);if(!s){closeStage();return;}
   stopScroll();stg.chordsOverride=null;
   const pref=s.stage||{};stg.speed=pref.speed||stg.defSpeed;stg.size=pref.size||stg.defSize;
+  stg.view=startView(s);tab.beat=0;tab.done=false;
   const notes=[s.dnote,s.notes].filter(x=>x&&x.trim()).join(' · ');
   $('st-notes').textContent=notes;$('st-notes').hidden=!notes;
   const n=stg.ids.length;
   $('st-pos').textContent=n>1?`Song ${stg.i+1} of ${n}`:'Song';
   $('st-title').textContent=s.title;
   $('st-meta').innerHTML=metaHTML(s);
+  $('st-body').scrollTop=0;
   drawChart();
   const nx=song(stg.ids[stg.i+1]);
   if(nx){const a=tune(s.tuning),b=tune(nx.tuning);
@@ -888,26 +1059,125 @@ function renderStage(){
     $('st-next').innerHTML=`Next: <b>${esc(nx.title)}</b>${rt}`;
   } else $('st-next').textContent=n>1?'Last song':'';
   $('st-prev').disabled=stg.i===0;$('st-nextbtn').disabled=stg.i>=n-1;
-  $('st-speed').textContent=stg.speed;
-  $('st-body').scrollTop=0;
   renderDrums();
   if(stg.lastOpened!==s.id){stg.lastOpened=s.id;songOpened(s);}
 }
-function drawChart(){
-  const s=song(stg.ids[stg.i]);
-  const show=stg.chordsOverride??(s.chords!==false);
-  $('st-chords').setAttribute('aria-pressed',show);
-  if(!s.chart||!s.chart.trim()){
-    $('st-chords').hidden=true;
-    const q=encodeURIComponent((s.title+' '+s.artist).trim());
-    $('st-body').innerHTML=`<div class="snone"><p>No lyrics for this song yet. Tap Edit and paste lyrics or a chord chart.</p>
-      <div class="links"><a href="https://www.ultimate-guitar.com/search.php?search_type=title&value=${q}" target="_blank" rel="noopener">Find chords ↗</a><a href="https://www.google.com/search?q=${q}%20lyrics" target="_blank" rel="noopener">Find lyrics ↗</a></div></div>`;
-    return;
-  }
-  const c=chartHTML(s.chart,show);
-  $('st-chords').hidden=!/\S/.test(s.chart)||!(s.chart.split('\n').some(isChordLine)||/\[[A-G][^\]]*\]/.test(s.chart));
-  $('st-body').innerHTML=`<div class="chart${c.mono?' mono':''}" style="--chart-size:${stg.size}px">${c.html}</div>`;
+function renderViewSeg(s){
+  const vs=songViews(s);const seg=$('st-views');seg.hidden=vs.length<2;
+  seg.innerHTML=VIEWS.filter(v=>vs.includes(v[0])).map(([v,l])=>`<button data-view="${v}" aria-pressed="${v===stg.view}">${l}</button>`).join('');
 }
+$('st-views').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b||b.dataset.view===stg.view)return;
+  stopScroll();stg.view=b.dataset.view;tab.beat=0;tab.done=false;$('st-body').scrollTop=0;drawChart();});
+function updateSpeed(){
+  const s=song(stg.ids[stg.i]);
+  $('st-speed').textContent=stg.view==='tab'?((s&&effBpm(s))||'—')+' BPM':stg.speed;
+}
+function drawChart(){
+  const s=song(stg.ids[stg.i]);if(!s)return;
+  renderViewSeg(s);
+  const v=stg.view;
+  ['st-slower','st-scroll','st-speed','st-faster'].forEach(id=>$(id).hidden=v==='sheet');
+  $('st-slower').setAttribute('aria-label',v==='tab'?'Slower (BPM)':'Scroll slower');
+  $('st-faster').setAttribute('aria-label',v==='tab'?'Faster (BPM)':'Scroll faster');
+  setPlayBtn();updateSpeed();
+  $('st-chords').hidden=true;
+  if(!songViews(s).length){
+    const q=encodeURIComponent((s.title+' '+s.artist).trim());
+    $('st-body').innerHTML=`<div class="snone"><p>Nothing on this song yet. Tap Edit to add a tab, lyrics or a sheet.</p>
+      <div class="links"><a href="https://www.ultimate-guitar.com/search.php?search_type=title&value=${q}" target="_blank" rel="noopener">Find chords or tabs ↗</a><a href="https://www.google.com/search?q=${q}%20lyrics" target="_blank" rel="noopener">Find lyrics ↗</a></div></div>`;
+    tab.tl=null;return;
+  }
+  if(v==='lyrics'){
+    const show=stg.chordsOverride??(s.chords!==false);
+    $('st-chords').setAttribute('aria-pressed',show);
+    const c=chartHTML(s.chart,show);
+    $('st-chords').hidden=!(s.chart.split('\n').some(isChordLine)||/\[[A-G][^\]]*\]/.test(s.chart));
+    $('st-body').innerHTML=`<div class="chart${c.mono?' mono':''}" style="--chart-size:${stg.size}px">${c.html}</div>`;
+    tab.tl=null;return;
+  }
+  const P=parseMono(viewText(s,v));
+  const pref=s.stage||{};
+  stg.vsize=(v==='tab'?pref.tabSize:pref.sheetSize)||fitSize(P.maxCols);
+  tab.info=v==='tab'?P.info:[];
+  $('st-body').innerHTML=`<div class="chart tabv" style="--chart-size:${stg.vsize}px">${v==='tab'?'<div class="tspace"></div>':''}<span class="mmeasure" aria-hidden="true">0000000000</span>${P.html}${v==='tab'?'<div class="tend"></div>':''}</div>`;
+  if(v==='tab'){measureTab();tabDraw(tab.beat,tab.on);} else tab.tl=null;
+}
+
+/* ---------- Tab playback: continuous scroll in time, current line held a third of the way down ---------- */
+const tab={on:false,raf:0,beat:0,tl:null,info:[],timers:[],cw:10,done:false,quietUntil:0};
+function measureTab(){
+  const body=$('st-body'),ch=body.querySelector('.tabv');
+  if(!ch||stg.view!=='tab'){tab.tl=null;return;}
+  const s=song(stg.ids[stg.i]);const bpb=(s&&s.bpb)||4;
+  const sp=ch.querySelector('.tspace');if(sp)sp.style.height=Math.max(0,Math.round(body.clientHeight/3)-20)+'px';
+  const m=ch.querySelector('.mmeasure');tab.cw=m?m.getBoundingClientRect().width/10:10;
+  const base=body.getBoundingClientRect().top-body.scrollTop;
+  let start=0;
+  const sys=[...ch.querySelectorAll('.tsys')].map((el,k)=>{const inf=tab.info[k]||{bars:1,reps:1,cols:[0,1]};const r=el.getBoundingClientRect();
+    const beats=inf.bars*bpb*inf.reps;const o={el,top:r.top-base,h:r.height,start,beats,bpb,bars:inf.bars,reps:inf.reps,cols:inf.cols};start+=beats;return o;});
+  tab.tl={sys,total:start};
+}
+function tabAt(beat){
+  const S=tab.tl.sys;let k=0;while(k<S.length-1&&beat>=S[k+1].start)k++;
+  return {k,f:Math.min(1,Math.max(0,(beat-S[k].start)/S[k].beats))};
+}
+function tabDraw(beat,follow){
+  const tl=tab.tl;if(!tl||!tl.sys.length)return;
+  const {k,f}=tabAt(beat);const S=tl.sys,c=S[k],b=$('st-body');
+  if(follow){const nt=k+1<S.length?S[k+1].top:c.top+c.h;const y=c.top+(nt-c.top)*f;tab.quietUntil=performance.now()+80;b.scrollTop=y-b.clientHeight/3;}
+  S.forEach((x,i)=>x.el.classList.toggle('now',i===k));
+  const pf=f*c.reps,pass=Math.min(c.reps-1,Math.floor(pf)),inner=f>=1?1:pf-Math.floor(pf);
+  const bi=Math.min(c.bars-1,Math.floor(inner*c.bars)),bf=inner*c.bars-bi;
+  const x=(c.cols[bi]+bf*(c.cols[bi+1]-c.cols[bi]))*tab.cw;
+  let cur=$('tcur');if(!cur||cur.parentNode!==c.el){if(cur)cur.remove();cur=document.createElement('div');cur.id='tcur';cur.className='tcur';c.el.appendChild(cur);}
+  cur.style.transform=`translateX(${x}px)`;
+  if(c.reps>1) cur.dataset.pass=(pass+1)+' of '+c.reps; else delete cur.dataset.pass;
+  const ch=c.el.closest('.tabv');
+  if(ch&&ch.scrollWidth>ch.clientWidth){if(x<ch.scrollLeft+20||x>ch.scrollLeft+ch.clientWidth*0.8) ch.scrollLeft=Math.max(0,x-ch.clientWidth*0.25);}
+}
+function tabBeatFromScroll(){
+  measureTab();const tl=tab.tl;if(!tl||!tl.sys.length)return 0;
+  const b=$('st-body');const y=b.scrollTop+b.clientHeight/3;const S=tl.sys;
+  if(y<=S[0].top+1) return 0;
+  let k=0;while(k<S.length-1&&y>=S[k+1].top)k++;
+  const c=S[k],nt=k+1<S.length?S[k+1].top:c.top+c.h;
+  const f=Math.min(0.999,Math.max(0,(y-c.top)/Math.max(1,nt-c.top)));
+  return c.start+Math.floor(f*c.beats/c.bpb)*c.bpb;   // back to the start of that bar
+}
+function tabRun(from){
+  stopScroll();measureTab();
+  if(!tab.tl||!tab.tl.sys.length){startScroll();return;}
+  tab.beat=from||0;tab.done=false;tab.on=true;setPlayBtn();
+  let last=performance.now();
+  const step=t=>{
+    if(!tab.on)return;
+    const s=song(stg.ids[stg.i]);const bpm=(s&&effBpm(s))||0;
+    tab.beat+=Math.max(0,t-last)/1000*bpm/60;last=t;
+    if(tab.beat>=tab.tl.total){tab.beat=tab.tl.total;tabDraw(tab.beat,true);stopScroll();tab.done=true;return;}
+    tabDraw(tab.beat,true);tab.raf=requestAnimationFrame(step);
+  };
+  tab.raf=requestAnimationFrame(step);
+}
+function tabPlay(){
+  const s=song(stg.ids[stg.i]);const bpm=effBpm(s);
+  if(!bpm){toast("Set this song's BPM first: Edit → Tempo & drums.");return;}
+  measureTab();
+  if(!tab.tl||!tab.tl.sys.length){toast('No tab lines found. Staff lines need | and dashes, like G|---3---|');return;}
+  const from=tab.done?0:tabBeatFromScroll();tab.done=false;tab.beat=from;tabDraw(from,true);
+  const beats=mcfg.count||0;
+  if(!beats){tabRun(from);return;}
+  const iv=60000/bpm;
+  for(let k=0;k<beats;k++) tab.timers.push(setTimeout(()=>{$('countnum').textContent=k+1;$('countin').hidden=false;},30+k*iv));
+  tab.timers.push(setTimeout(()=>{tab.timers=[];$('countin').hidden=true;tabRun(from);},30+beats*iv));
+  setPlayBtn();
+}
+$('st-body').addEventListener('scroll',()=>{
+  if(stg.view!=='tab'||tab.on||tab.timers.length||!tab.tl||performance.now()<tab.quietUntil)return;
+  tab.done=false;tab.beat=tabBeatFromScroll();tabDraw(tab.beat,false);
+},{passive:true});
+let rzT=0;
+window.addEventListener('resize',()=>{if($('stage').hidden||stg.view==='lyrics')return;clearTimeout(rzT);rzT=setTimeout(()=>{drawChart();if(tab.on||stg.view!=='tab')return;tabDraw(tab.beat,true);},200);});
+
 function scrollTick(t0){
   let last=t0;
   const b0=$('st-body');stg.acc=b0.scrollTop;
@@ -915,24 +1185,47 @@ function scrollTick(t0){
     const b=$('st-body');if(b.scrollTop+b.clientHeight>=b.scrollHeight-2){stopScroll();return;}stg.raf=requestAnimationFrame(step);};
   stg.raf=requestAnimationFrame(step);
 }
-function startScroll(){stg.scrolling=true;$('st-scroll').setAttribute('aria-pressed','true');$('st-scroll').textContent='Pause';scrollTick(performance.now());}
-function stopScroll(){stg.scrolling=false;stg.fixedPx=null;cancelAnimationFrame(stg.raf);$('st-scroll').setAttribute('aria-pressed','false');$('st-scroll').textContent='Scroll';}
+function setPlayBtn(){
+  const on=stg.scrolling||tab.on||tab.timers.length>0;const b=$('st-scroll');
+  b.setAttribute('aria-pressed',String(on));b.textContent=on?'Pause':(stg.view==='tab'?'Play':'Scroll');
+}
+function startScroll(){stg.scrolling=true;setPlayBtn();scrollTick(performance.now());}
+function stopScroll(){
+  stg.scrolling=false;stg.fixedPx=null;cancelAnimationFrame(stg.raf);
+  tab.on=false;cancelAnimationFrame(tab.raf);
+  if(tab.timers.length){tab.timers.forEach(clearTimeout);tab.timers=[];$('countin').hidden=true;}
+  setPlayBtn();
+}
 $('st-close').onclick=closeStage;
 $('st-prev').onclick=()=>{if(stg.i>0){drumsLeave();stg.i--;renderStage();}};
 $('st-nextbtn').onclick=()=>{if(stg.i<stg.ids.length-1){drumsLeave();stg.i++;renderStage();}};
-$('st-scroll').onclick=()=>stg.scrolling?stopScroll():startScroll();
-$('st-slower').onclick=()=>{stg.speed=Math.max(1,stg.speed-1);$('st-speed').textContent=stg.speed;saveStg();};
-$('st-faster').onclick=()=>{stg.speed=Math.min(15,stg.speed+1);$('st-speed').textContent=stg.speed;saveStg();};
-$('st-smaller').onclick=()=>{stg.size=Math.max(14,stg.size-2);saveStg();drawChart();};
-$('st-bigger').onclick=()=>{stg.size=Math.min(56,stg.size+2);saveStg();drawChart();};
+$('st-scroll').onclick=()=>{if(stg.scrolling||tab.on||tab.timers.length)stopScroll();else if(stg.view==='tab')tabPlay();else startScroll();};
+function nudgeBpm(d){const s=song(stg.ids[stg.i]);if(s)setBpm((effBpm(s)||100)+d);}
+$('st-slower').onclick=()=>{if(stg.view==='tab')return nudgeBpm(-1);stg.speed=Math.max(1,stg.speed-1);updateSpeed();saveStg();};
+$('st-faster').onclick=()=>{if(stg.view==='tab')return nudgeBpm(1);stg.speed=Math.min(15,stg.speed+1);updateSpeed();saveStg();};
+function resize(d){
+  if(stg.view==='lyrics'){stg.size=Math.max(14,Math.min(56,stg.size+d));saveStg();drawChart();return;}
+  stg.vsize=Math.max(10,Math.min(48,stg.vsize+d));saveStg();drawChart();
+  if(stg.view==='tab'&&!tab.on)tabDraw(tab.beat,true);
+}
+$('st-smaller').onclick=()=>resize(-2);
+$('st-bigger').onclick=()=>resize(2);
 $('st-chords').onclick=()=>{const s=song(stg.ids[stg.i]);stg.chordsOverride=!(stg.chordsOverride??(s.chords!==false));drawChart();};
 $('st-edit').onclick=()=>{stopScroll();openEditor(stg.ids[stg.i]);};
-$('st-body').addEventListener('pointerdown',()=>{if(stg.scrolling)stopScroll();});
+$('st-body').addEventListener('pointerdown',()=>{if(stg.scrolling||tab.on||tab.timers.length)stopScroll();});
 document.addEventListener('keydown',e=>{
   if($('stage').hidden||!$('editor').hidden||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
   const b=$('st-body'),page=b.clientHeight*0.6;
-  if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();b.scrollBy({top:page,behavior:'smooth'});}
-  else if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();b.scrollBy({top:-page,behavior:'smooth'});}
+  const down=e.key==='ArrowDown'||e.key==='PageDown'||e.key===' ',up=e.key==='ArrowUp'||e.key==='PageUp';
+  if((down||up)&&stg.view==='tab'&&tab.on&&tab.tl){
+    // page-turner while the tab plays: jump to the next line, or back to the start of this one (or the one before)
+    e.preventDefault();const S=tab.tl.sys,{k}=tabAt(tab.beat);
+    if(down){if(k+1<S.length)tab.beat=S[k+1].start;}
+    else tab.beat=(tab.beat-S[k].start>=S[k].bpb)?S[k].start:(k>0?S[k-1].start:0);
+    return;
+  }
+  if(down){e.preventDefault();b.scrollBy({top:page,behavior:'smooth'});}
+  else if(up){e.preventDefault();b.scrollBy({top:-page,behavior:'smooth'});}
   else if(e.key==='ArrowRight'){$('st-nextbtn').click();}
   else if(e.key==='ArrowLeft'){$('st-prev').click();}
   else if(e.key==='Escape'){closeStage();}
@@ -1101,13 +1394,14 @@ function setBpm(v){
   if(st){st.bpm=st.bpm||{};if(v===s.bpm)delete st.bpm[s.id];else st.bpm[s.id]=v;touch(st);}
   else{s.bpm=v;touch(s);}
   save();renderDrums();
-  clearTimeout(bpmTimer);bpmTimer=setTimeout(()=>sendTempo(v),350);
+  clearTimeout(bpmTimer);if(s.drums)bpmTimer=setTimeout(()=>sendTempo(v),350);
+  updateSpeed();
 }
 function clearCount(){drum.timers.forEach(clearTimeout);drum.timers=[];$('countin').hidden=true;}
 function drumsLeave(){trackStop(true);clearCount();if(drum.running){sendCC(mcfg.map.stop);drum.running=false;}}
 $('d-slower').onclick=()=>{const s=song(stg.ids[stg.i]);setBpm((effBpm(s)||100)-1);};
 $('d-faster').onclick=()=>{const s=song(stg.ids[stg.i]);setBpm((effBpm(s)||100)+1);};
-$('d-reset').onclick=()=>{const s=song(stg.ids[stg.i]);const st=curStageSet();if(st&&st.bpm){delete st.bpm[s.id];touch(st);save();}renderDrums();sendTempo(s.bpm);};
+$('d-reset').onclick=()=>{const s=song(stg.ids[stg.i]);const st=curStageSet();if(st&&st.bpm){delete st.bpm[s.id];touch(st);save();}renderDrums();updateSpeed();sendTempo(s.bpm);};
 $('d-default').onclick=()=>{const s=song(stg.ids[stg.i]);const st=curStageSet();const b=effBpm(s);s.bpm=b;touch(s);if(st&&st.bpm){delete st.bpm[s.id];touch(st);}save();renderDrums();toast(`${s.title} is now ${b} BPM everywhere`);};
 $('d-start').onclick=()=>{
   const s=song(stg.ids[stg.i]);if(!s||drum.running)return;
@@ -1116,7 +1410,8 @@ $('d-start').onclick=()=>{
   if(mcfg.open) sendCC(mcfg.map.open);
   if(beats&&mcfg.method==='tap') sendTempo(b,beats);   // the count-in taps also set the tempo
   else if(b&&mcfg.method==='clock') startClock(b);
-  const go=()=>{$('countin').hidden=true;sendCC(mcfg.map.start);if(mcfg.scroll&&!stg.scrolling)startScroll();};
+  const go=()=>{$('countin').hidden=true;sendCC(mcfg.map.start);
+    if(mcfg.scroll){if(stg.view==='tab'&&tab.tl&&tab.tl.sys.length){if(!tab.on)tabRun(tab.done?0:tabBeatFromScroll());}else if(stg.view==='lyrics'&&!stg.scrolling)startScroll();}};
   if(!beats){go();return;}
   for(let k=0;k<beats;k++) drum.timers.push(setTimeout(()=>{$('countnum').textContent=k+1;$('countin').hidden=false;},30+k*iv));
   drum.timers.push(setTimeout(go,30+beats*iv));
@@ -1203,7 +1498,7 @@ function trackStart(){
   srcs.forEach(x=>x.start(when));srcs[0].onended=()=>{if(player.srcs===srcs)trackStop(false);};
   player.srcs=srcs;player.t0=when;player.playing=true;
   // lyrics: scroll from where they are so they finish with the track
-  if(acfg.fit){const b=$('st-body');const rem=b.scrollHeight-b.clientHeight-b.scrollTop;
+  if(acfg.fit&&stg.view==='lyrics'){const b=$('st-body');const rem=b.scrollHeight-b.clientHeight-b.scrollTop;
     stopScroll();setTimeout(()=>{if(!player.playing)return;stg.fixedPx=rem>0?rem/player.dur:0;startScroll();stg.fixedPx=rem>0?rem/player.dur:0;},100);}
   const tick=()=>{if(!player.playing)return;renderTrack();player.raf=requestAnimationFrame(tick);};tick();
   renderTrack();
