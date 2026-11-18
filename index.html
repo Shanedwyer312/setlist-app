@@ -133,7 +133,7 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .tabv.sheetpage .tsys{font-weight:600}
 .tabv.sheetpage .tsys i{font-weight:400}
 .tabv.sheetpage .sec{font-size:.95em;font-weight:700;letter-spacing:.05em;color:var(--accent);margin-top:.3em;line-height:1.15}
-.tabv.sheetpage .sec span{font-family:var(--font-body);font-style:italic;font-weight:500;color:var(--fg)}
+.tabv.sheetpage .sec span{color:var(--fg)}
 .tabv.sheetpage .ll,.tabv.sheetpage .tsys em.ann{color:var(--t-e);font-weight:500}
 .tabv .tsys.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
 .tabv .tend{height:30vh}
@@ -668,7 +668,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.7.0';
+const APP_VERSION='1.7.1';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
