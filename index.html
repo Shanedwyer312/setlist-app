@@ -135,6 +135,7 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .tabv.sheetpage .sec{font-size:.95em;font-weight:700;letter-spacing:.05em;color:var(--accent);margin-top:.3em;line-height:1.15}
 .tabv.sheetpage .sec span{color:var(--fg)}
 .tabv.sheetpage .ll,.tabv.sheetpage .tsys em.ann{color:var(--t-e);font-weight:500}
+.tabv .simg{display:block;width:100%;height:auto;margin:.05em 0 .25em}
 .tabv .tsys.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
 .tabv .tend{height:30vh}
 /* Sheet screens: a line with just === starts the next screen; one flick (or page-turner press) moves a whole screen */
@@ -672,7 +673,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.7.2';
+const APP_VERSION='1.8.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1026,6 +1027,8 @@ function parseMono(text){
     return esc(head).replace(/-+/g,m=>'<i>'+m+'</i>')+(tail.trim()?'<em class="ann">'+esc(tail)+'</em>':esc(tail));};
   while(i<lines.length){
     const line=lines[i];
+    const im=line.match(/^\s*!\[([^\]]*)\]\((data:image\/(?:svg\+xml|png|jpeg|webp);base64,[A-Za-z0-9+\/=]+)\)\s*$/);
+    if(im){out.push(`<img class="simg" alt="${esc(im[1])}" src="${im[2]}">`);i++;continue;}
     if(isTabLine(line)){
       const grp=[],seen=new Set();const lab=l=>(l.trim().match(/^([A-Ga-g][#b]?)\s?[|:]/)||[])[1];
       while(i<lines.length&&isTabLine(lines[i])){const lb=lab(lines[i]);if(lb&&seen.has(lb))break;if(lb)seen.add(lb);grp.push(lines[i]);i++;}
