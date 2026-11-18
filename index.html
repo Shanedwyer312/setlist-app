@@ -128,6 +128,13 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .chart.tabv{font-family:var(--font-mono);font-size:var(--chart-size,20px);line-height:1.3;white-space:pre-wrap;overflow-wrap:normal;max-width:none;position:relative;overflow-x:auto;padding-bottom:4px}
 .tabv .tsys{white-space:pre;position:relative;width:max-content;min-width:100%;margin-block:.2em;padding-block:.1em;border-radius:6px;transition:background-color .3s}
 .tabv .tsys i{font-style:normal;color:var(--muted);opacity:.7}
+.tabv .tsys em{font-style:normal}
+/* Sheet page colors, for reading at a glance: amber section names, white lyric cue and frets, teal notes and road map */
+.tabv.sheetpage .tsys{font-weight:600}
+.tabv.sheetpage .tsys i{font-weight:400}
+.tabv.sheetpage .sec{font-size:.95em;font-weight:700;letter-spacing:.05em;color:var(--accent);margin-top:.3em;line-height:1.15}
+.tabv.sheetpage .sec span{font-family:var(--font-body);font-style:italic;font-weight:500;color:var(--fg)}
+.tabv.sheetpage .ll,.tabv.sheetpage .tsys em.ann{color:var(--t-e);font-weight:500}
 .tabv .tsys.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
 .tabv .tend{height:30vh}
 /* Tab page: plain lines are lyric cues, small and dim so the tab stays the focus */
@@ -661,7 +668,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.6.1';
+const APP_VERSION='1.7.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1009,7 +1016,8 @@ function sysInfo(lines){
 function parseMono(text){
   const lines=String(text||'').replace(/\r/g,'').replace(/\t/g,'    ').split('\n');
   const out=[],info=[];let maxCols=0,i=0;
-  const tabLineHTML=l=>esc(l).replace(/-+/g,m=>'<i>'+m+'</i>');
+  const tabLineHTML=l=>{const k=l.lastIndexOf('|'),head=l.slice(0,k+1),tail=l.slice(k+1);
+    return esc(head).replace(/-+/g,m=>'<i>'+m+'</i>')+(tail.trim()?'<em class="ann">'+esc(tail)+'</em>':esc(tail));};
   while(i<lines.length){
     const line=lines[i];
     if(isTabLine(line)){
@@ -1103,7 +1111,7 @@ function drawChart(){
   const pref=s.stage||{};
   stg.vsize=(v==='tab'?pref.tabSize:pref.sheetSize)||fitSize(P.maxCols);
   tab.info=v==='tab'?P.info:[];
-  $('st-body').innerHTML=`<div class="chart tabv${v==='tab'?' tabpage':''}" style="--chart-size:${stg.vsize}px">${v==='tab'?'<div class="tspace"></div>':''}<span class="mmeasure" aria-hidden="true">0000000000</span>${P.html}${v==='tab'?'<div class="tend"></div>':''}</div>`;
+  $('st-body').innerHTML=`<div class="chart tabv${v==='tab'?' tabpage':' sheetpage'}" style="--chart-size:${stg.vsize}px">${v==='tab'?'<div class="tspace"></div>':''}<span class="mmeasure" aria-hidden="true">0000000000</span>${P.html}${v==='tab'?'<div class="tend"></div>':''}</div>`;
   if(v==='tab'){measureTab();tabDraw(tab.beat,tab.on);} else tab.tl=null;
 }
 
