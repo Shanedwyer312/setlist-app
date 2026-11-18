@@ -137,6 +137,10 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .tabv.sheetpage .ll,.tabv.sheetpage .tsys em.ann{color:var(--t-e);font-weight:500}
 .tabv .tsys.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
 .tabv .tend{height:30vh}
+/* Sheet screens: a line with just === starts the next screen; one flick (or page-turner press) moves a whole screen */
+.sbody.paged{scroll-snap-type:y mandatory;scroll-padding-top:20px;padding-bottom:0}
+.sbody.paged .chart.tabv{overflow:visible}
+.tabv.sheetpage .spage{min-height:var(--pageh,80vh);scroll-snap-align:start;scroll-snap-stop:always}
 /* Tab page: plain lines are lyric cues, small and dim so the tab stays the focus */
 .tabv.tabpage .ll{font-family:var(--font-body);font-size:.7em;line-height:1.3;color:color-mix(in srgb,var(--fg) 72%,var(--bg));white-space:pre-wrap;margin-block:.1em}
 .tcur{position:absolute;left:0;top:0;bottom:0;width:3px;margin-left:-1px;border-radius:2px;background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 70%,transparent);pointer-events:none;will-change:transform}
@@ -299,7 +303,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
         <label class="toggle"><input type="checkbox" id="e-chords"> Show chords on stage</label>
       </div>
       <div class="epane" data-pane="sheet" hidden>
-        <p class="hint">A page that stays put: riffs, lyrics, reminders, or all three. Tab lines keep their spacing.</p>
+        <p class="hint">A page that stays put: riffs, lyrics, reminders, or all three. Tab lines keep their spacing. A line with just === starts the next screen.</p>
         <label class="f">Sheet<textarea id="e-sheet" spellcheck="false" autocapitalize="off" placeholder="[Main riff]&#10;G|----------------|&#10;D|----------------|&#10;A|----------------|&#10;E|3---3---3---3---|"></textarea></label>
         <div class="actions"><button type="button" class="btn" data-staff="bass" data-into="e-sheet">Add bass staff</button><button type="button" class="btn" data-staff="gtr" data-into="e-sheet">Add guitar staff</button></div>
       </div>
@@ -472,7 +476,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
         <li>If a song has more than one page, switch between <b>Tab</b>, <b>Lyrics</b> and <b>Sheet</b> at the top.</li>
         <li><b>Lyrics:</b> <b>Scroll</b> starts auto-scroll. − / + next to it change the speed. Tap the lyrics to pause.</li>
         <li><b>Tab:</b> <b>Play</b> counts in, then scrolls in time. The line you're on stays a third of the way down the screen, and a cursor moves through each bar. − / + change the BPM. Tap the tab to pause, drag to any spot, and Play picks up from the bar at the cursor. With drums, Start runs the drums and the tab together. A page-turner jumps to the next or previous line while it's playing.</li>
-        <li><b>Sheet</b> stays put. Use A− / A+ to size it.</li>
+        <li><b>Sheet</b> stays put. Use A− / A+ to size it. If the sheet has a line with just <b>===</b>, it splits into screens: one flick (or a page-turner press) moves a whole screen.</li>
         <li><b>A− / A+</b> change the text size. Speed and size are remembered for each song.</li>
         <li><b>Next ›</b> shows what's next and warns you if you need to retune.</li>
         <li>A Bluetooth page-turner works too. Up/down scrolls, left/right changes song.</li>
@@ -668,7 +672,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.7.1';
+const APP_VERSION='1.7.2';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -989,7 +993,9 @@ function startView(s){
 
 /* Tab parsing: consecutive staff lines (G|---3---|) form one "system".
    Each system lasts (bars × beats per bar × repeats) beats. */
-const isTabLine=l=>{const t=l.trim();if(!/\|/.test(t)||(t.match(/-/g)||[]).length<3)return false;
+const isTabLine=l=>{const t=l.trim();if(!/\|/.test(t))return false;
+  // fewer than 3 dashes is still tab when the line is a string name, bar lines and only frets (e.g. A|12 12 12 12|)
+  if((t.match(/-/g)||[]).length<3&&!(/^[A-Ga-g][#b]?\s?\|[\s\d|\\/^~hpbrx()-]*\|/.test(t)&&(t.match(/\d/g)||[]).length>=3))return false;
   if(!/^([A-Ga-g][#b]?\s?)?[|:]/.test(t))return false;
   return !/[a-wyz]{3,}/i.test(t.replace(/^[A-Ga-g][#b]?/,'').replace(/\|[^|]*$/,''));};
 const REP=/(?:^|[\s(|])(?:x\s?(\d{1,2})|(\d{1,2})\s?x)(?=$|[\s)])/i;
@@ -1031,6 +1037,7 @@ function parseMono(text){
     }
     const sec=line.match(/^\s*\[([^\]]+)\]\s*(.*)$/);
     if(sec&&!CHORD.test(sec[1].trim())) out.push(`<div class="sec">${esc(sec[1])}${sec[2]?`<span style="text-transform:none;letter-spacing:0"> ${esc(sec[2])}</span>`:''}</div>`);
+    else if(/^\s*={3,}\s*$/.test(line)) out.push('<!--pb-->');
     else if(!line.trim()) out.push('<div class="gap"></div>');
     else if(isChordLine(line)) out.push(`<div class="cl">${esc(line)}</div>`);
     else out.push(`<div class="ll">${esc(line)}</div>`);
@@ -1087,7 +1094,7 @@ function updateSpeed(){
 function drawChart(){
   const s=song(stg.ids[stg.i]);if(!s)return;
   renderViewSeg(s);
-  const v=stg.view;
+  const v=stg.view;$('st-body').classList.remove('paged');
   ['st-slower','st-scroll','st-speed','st-faster'].forEach(id=>$(id).hidden=v==='sheet');
   $('st-slower').setAttribute('aria-label',v==='tab'?'Slower (BPM)':'Scroll slower');
   $('st-faster').setAttribute('aria-label',v==='tab'?'Faster (BPM)':'Scroll faster');
@@ -1108,6 +1115,11 @@ function drawChart(){
     tab.tl=null;return;
   }
   const P=parseMono(viewText(s,v));
+  const paged=v==='sheet'&&P.html.includes('<!--pb-->');
+  if(paged) P.html='<div class="spage">'+P.html.split('<!--pb-->').join('</div><div class="spage">')+'</div>';
+  else P.html=P.html.split('<!--pb-->').join('');
+  $('st-body').classList.toggle('paged',paged);
+  if(paged) $('st-body').style.setProperty('--pageh',Math.max(200,$('st-body').clientHeight-20)+'px');
   const pref=s.stage||{};
   stg.vsize=(v==='tab'?pref.tabSize:pref.sheetSize)||fitSize(P.maxCols);
   tab.info=v==='tab'?P.info:[];
