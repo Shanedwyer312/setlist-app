@@ -673,7 +673,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.8.0';
+const APP_VERSION='1.8.1';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1588,6 +1588,14 @@ function gh(method,body){
     headers:{Authorization:'Bearer '+sync.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},
     body:body?JSON.stringify(body):undefined});
 }
+// Files over 1 MB come back from the contents API with no content, so fetch those as a raw blob by sha.
+async function remoteText(j){
+  if(j.content&&j.encoding==='base64') return b64dec(j.content);
+  const r=await fetch(`https://api.github.com/repos/${sync.repo}/git/blobs/${j.sha}`,{cache:'no-store',
+    headers:{Authorization:'Bearer '+sync.token,Accept:'application/vnd.github.raw','X-GitHub-Api-Version':'2022-11-28'}});
+  if(!r.ok) throw new Error(r.status===401||r.status===403?'auth':'http');
+  return r.text();
+}
 function mergeData(a,b){
   const del=Object.assign({},a.deleted||{});
   Object.entries(b.deleted||{}).forEach(([k,v])=>{del[k]=Math.max(del[k]||0,v);});
@@ -1610,7 +1618,7 @@ async function doSync(){
     let done=false;
     for(let attempt=0;attempt<3&&!done;attempt++){
       const r=await gh('GET');let remote=null,sha;
-      if(r.ok){const j=await r.json();sha=j.sha;remote=normalize(JSON.parse(b64dec(j.content)));}
+      if(r.ok){const j=await r.json();sha=j.sha;remote=normalize(JSON.parse(await remoteText(j)));}
       else if(r.status!==404) throw new Error(r.status===401||r.status===403?'auth':r.status===404?'repo':'http');
       const merged=remote?mergeData(state,remote):normalize(state);
       const changed=JSON.stringify(merged)!==JSON.stringify(state);
