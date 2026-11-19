@@ -286,7 +286,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
           <div class="bpmrow"><input id="e-bpm" type="number" inputmode="numeric" min="40" max="250" placeholder="e.g. 84" style="flex:1;min-width:0;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px">
           <button type="button" class="btn" id="e-tap">Tap</button><a class="linkbtn" id="e-find-bpm" href="#" target="_blank" rel="noopener">Find BPM ↗</a></div>
           <span class="hint" id="e-tap-hint">Play the song and tap along to set the BPM.</span></div>
-        <label class="f">Rig #<input id="e-rig" type="number" inputmode="numeric" min="1" max="999" placeholder="Loads by Program Change"></label>
+        <label class="f">Rig #<input id="e-rig" type="number" inputmode="numeric" min="1" max="999" placeholder="Rig's MIDI PROG number"></label>
       </div>
       <label class="f">Drum note<input id="e-dnote" placeholder="Kick only, 4 on the floor"></label>
     </fieldset>
@@ -685,7 +685,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.9.1';
+const APP_VERSION='1.9.2';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1395,7 +1395,8 @@ function pickOut(){
 function send(bytes,at){try{if(midi.out)midi.out.send(bytes,at);}catch(e){}}
 const chan=()=>((mcfg.channel|0)-1)&15;
 const sendCC=(pair,at)=>{if(pair&&pair[0]!=null&&pair[0]!=='')send([0xB0|chan(),(+pair[0])&127,(+pair[1])&127],at);};
-const sendPC=v=>send([0xC0|chan(),(+v)&127]);
+// HeadRush numbers rigs from 1 (MIDI PROG 1 = program 0 on the wire), so send one less than the number shown on the HeadRush.
+const sendPC=v=>{const n=(+v)-1;if(n>=0&&n<=127)send([0xC0|chan(),n]);};
 function midiText(){
   return {ok:['ok','MIDI: '+(midi.out&&midi.out.name||'connected')],none:['warn','No MIDI device found. Plug in the cable.'],
     unsupported:['warn',"This browser can't send MIDI. Use Chrome on a computer or Web MIDI Browser on the iPad."],
