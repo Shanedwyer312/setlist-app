@@ -685,7 +685,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.9.2';
+const APP_VERSION='1.9.3';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1378,9 +1378,11 @@ $('b-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new File
 
 /* ---------- HeadRush MIDI ---------- */
 const MIDI_KEY='hsd-midi';
-const MAP_DEFAULT={start:[42,127],stop:[42,0],fill:[43,127],end:[45,127],open:[31,127]};
+const MAP_DEFAULT={start:[42,127],stop:[42,127],fill:[43,127],end:[45,127],open:[31,127]};
 const mcfg={enabled:false,outId:'',channel:1,method:'tap',count:4,rig:true,scroll:true,open:false,map:JSON.parse(JSON.stringify(MAP_DEFAULT))};
-try{const c=JSON.parse(localStorage.getItem(MIDI_KEY)||'null');if(c){Object.assign(mcfg,c);mcfg.map=Object.assign(JSON.parse(JSON.stringify(MAP_DEFAULT)),c.map||{});}}catch(e){}
+try{const c=JSON.parse(localStorage.getItem(MIDI_KEY)||'null');if(c){Object.assign(mcfg,c);mcfg.map=Object.assign(JSON.parse(JSON.stringify(MAP_DEFAULT)),c.map||{});
+  // Tested Nov 19: the HeadRush's play/stop CC is a toggle, so Stop must send the same value as Start
+  if(mcfg.map.stop&&+mcfg.map.stop[0]===42&&+mcfg.map.stop[1]===0){mcfg.map.stop=[42,127];try{localStorage.setItem(MIDI_KEY,JSON.stringify(mcfg));}catch(e){}}}}catch(e){}
 const saveMcfg=()=>{try{localStorage.setItem(MIDI_KEY,JSON.stringify(mcfg));}catch(e){}};
 const midi={access:null,out:null,status:'off'};
 async function midiConnect(){
@@ -1440,7 +1442,7 @@ function sendTempo(bpm,beats){
 }
 
 /* Drums on the stage screen */
-const drum={running:false,timers:[]};
+const drum={running:false,started:false,timers:[]};
 const curStageSet=()=>stg.set?state.sets.find(x=>x.id===stg.set):null;
 function effBpm(s){const st=curStageSet();return (st&&st.bpm&&st.bpm[s.id])||s.bpm||null;}
 function renderDrums(){
@@ -1471,7 +1473,7 @@ function setBpm(v){
   updateSpeed();
 }
 function clearCount(){drum.timers.forEach(clearTimeout);drum.timers=[];$('countin').hidden=true;}
-function drumsLeave(){trackStop(true);clearCount();if(drum.running){sendCC(mcfg.map.stop);drum.running=false;}}
+function drumsLeave(){trackStop(true);clearCount();if(drum.running){if(drum.started)sendCC([42,0]);drum.running=false;drum.started=false;}}
 $('d-slower').onclick=()=>{const s=song(stg.ids[stg.i]);setBpm((effBpm(s)||100)-1);};
 $('d-faster').onclick=()=>{const s=song(stg.ids[stg.i]);setBpm((effBpm(s)||100)+1);};
 $('d-reset').onclick=()=>{const s=song(stg.ids[stg.i]);const st=curStageSet();if(st&&st.bpm){delete st.bpm[s.id];touch(st);save();}renderDrums();updateSpeed();sendTempo(s.bpm);};
@@ -1483,15 +1485,15 @@ $('d-start').onclick=()=>{
   if(mcfg.open) sendCC(mcfg.map.open);
   if(beats&&mcfg.method==='tap') sendTempo(b,beats);   // the count-in taps also set the tempo
   else if(b&&mcfg.method==='clock') startClock(b);
-  const go=()=>{$('countin').hidden=true;sendCC(mcfg.map.start);
+  const go=()=>{$('countin').hidden=true;sendCC(mcfg.map.start);drum.started=true;
     if(mcfg.scroll){if(stg.view==='tab'&&tab.tl&&tab.tl.sys.length){if(!tab.on)tabRun(tab.done?0:tabBeatFromScroll());}else if(stg.view==='lyrics'&&!stg.scrolling)startScroll();}};
   if(!beats){go();return;}
   for(let k=0;k<beats;k++) drum.timers.push(setTimeout(()=>{$('countnum').textContent=k+1;$('countin').hidden=false;},30+k*iv));
   drum.timers.push(setTimeout(go,30+beats*iv));
 };
 $('d-fill').onclick=()=>sendCC(mcfg.map.fill);
-$('d-end').onclick=()=>{clearCount();sendCC(mcfg.map.end);drum.running=false;renderDrums();};
-$('d-stop').onclick=()=>{clearCount();sendCC(mcfg.map.stop);drum.running=false;stopScroll();renderDrums();};
+$('d-end').onclick=()=>{clearCount();if(drum.started)sendCC(mcfg.map.end);drum.running=false;drum.started=false;renderDrums();};
+$('d-stop').onclick=()=>{clearCount();if(drum.started)sendCC(mcfg.map.stop);drum.running=false;drum.started=false;stopScroll();renderDrums();};
 if(mcfg.enabled&&navigator.requestMIDIAccess) midiConnect(); else {midi.status=navigator.requestMIDIAccess?'off':'unsupported';}
 
 
