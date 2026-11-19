@@ -148,6 +148,8 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .tabv .simg{display:block;width:100%;height:auto;margin:.05em 0 .25em}
 /* Sheet drawings scale with the text size (49em = the desktop look at 22px); never wider than the screen */
 .tabv.sheetpage .simg{width:var(--simg-w,49em);max-width:100%}
+.tabv .tsys.timg{white-space:normal;width:100%;min-width:0;padding-block:0}
+.tabv .tsys.timg .simg{margin:0}
 .tabv .tsys.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
 .tabv .tend{height:30vh}
 /* Sheet screens: a line with just === starts the next screen; one flick (or page-turner press) moves a whole screen */
@@ -685,7 +687,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.9.3';
+const APP_VERSION='1.10.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1040,7 +1042,12 @@ function parseMono(text){
   while(i<lines.length){
     const line=lines[i];
     const im=line.match(/^\s*!\[([^\]]*)\]\((data:image\/(?:svg\+xml|png|jpeg|webp);base64,[A-Za-z0-9+\/=]+)\)\s*$/);
-    if(im){out.push(`<img class="simg" alt="${esc(im[1])}" src="${im[2]}">`);i++;continue;}
+    if(im){
+      // A drawn tab row can play in time on the Tab page: alt text "tab bars=4 reps=2 cols=0.026,0.27,..." (bar lines as fractions of the image width)
+      const tm=im[1].match(/^tab\s+bars=(\d+)\s+reps=(\d+)\s+cols=([\d.,]+)/);
+      if(tm){const cols=tm[3].split(',').map(Number);
+        if(cols.length===+tm[1]+1){out.push(`<div class="tsys timg" data-k="${info.length}"><img class="simg" alt="" src="${im[2]}"></div>`);info.push({bars:+tm[1],reps:Math.max(1,+tm[2]),cols,img:true,width:0});i++;continue;}}
+      out.push(`<img class="simg" alt="${esc(im[1].replace(/^tab\s.*$/,''))}" src="${im[2]}">`);i++;continue;}
     if(isTabLine(line)){
       const grp=[],seen=new Set();const lab=l=>(l.trim().match(/^([A-Ga-g][#b]?)\s?[|:]/)||[])[1];
       while(i<lines.length&&isTabLine(lines[i])){const lb=lab(lines[i]);if(lb&&seen.has(lb))break;if(lb)seen.add(lb);grp.push(lines[i]);i++;}
@@ -1171,7 +1178,7 @@ function measureTab(){
   const base=body.getBoundingClientRect().top-body.scrollTop;
   let start=0;
   const sys=[...ch.querySelectorAll('.tsys')].map((el,k)=>{const inf=tab.info[k]||{bars:1,reps:1,cols:[0,1]};const r=el.getBoundingClientRect();
-    const beats=inf.bars*bpb*inf.reps;const o={el,top:r.top-base,h:r.height,start,beats,bpb,bars:inf.bars,reps:inf.reps,cols:inf.cols};start+=beats;return o;});
+    const beats=inf.bars*bpb*inf.reps;const o={el,top:r.top-base,h:r.height,start,beats,bpb,bars:inf.bars,reps:inf.reps,cols:inf.cols,img:!!inf.img};start+=beats;return o;});
   tab.tl={sys,total:start};
 }
 function tabAt(beat){
@@ -1185,7 +1192,7 @@ function tabDraw(beat,follow){
   S.forEach((x,i)=>x.el.classList.toggle('now',i===k));
   const pf=f*c.reps,pass=Math.min(c.reps-1,Math.floor(pf)),inner=f>=1?1:pf-Math.floor(pf);
   const bi=Math.min(c.bars-1,Math.floor(inner*c.bars)),bf=inner*c.bars-bi;
-  const x=(c.cols[bi]+bf*(c.cols[bi+1]-c.cols[bi]))*tab.cw;
+  const x=(c.cols[bi]+bf*(c.cols[bi+1]-c.cols[bi]))*(c.img?c.el.clientWidth:tab.cw);
   let cur=$('tcur');if(!cur||cur.parentNode!==c.el){if(cur)cur.remove();cur=document.createElement('div');cur.id='tcur';cur.className='tcur';c.el.appendChild(cur);}
   cur.style.transform=`translateX(${x}px)`;
   if(c.reps>1) cur.dataset.pass=(pass+1)+' of '+c.reps; else delete cur.dataset.pass;
