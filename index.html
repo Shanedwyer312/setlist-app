@@ -146,6 +146,8 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .tabv.sheetpage .sec span{color:var(--fg)}
 .tabv.sheetpage .ll,.tabv.sheetpage .tsys em.ann{color:var(--t-e);font-weight:500}
 .tabv .simg{display:block;width:100%;height:auto;margin:.05em 0 .25em}
+/* Sheet drawings scale with the text size (49em = the desktop look at 22px); never wider than the screen */
+.tabv.sheetpage .simg{width:var(--simg-w,49em);max-width:100%}
 .tabv .tsys.now{background:color-mix(in srgb,var(--accent) 9%,transparent)}
 .tabv .tend{height:30vh}
 /* Sheet screens: a line with just === starts the next screen; one flick (or page-turner press) moves a whole screen */
@@ -683,7 +685,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.9.0';
+const APP_VERSION='1.9.1';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1147,6 +1149,14 @@ function drawChart(){
   stg.vsize=(v==='tab'?pref.tabSize:pref.sheetSize)||fitSize(P.maxCols);
   tab.info=v==='tab'?P.info:[];
   $('st-body').innerHTML=`<div class="chart tabv${v==='tab'?' tabpage':' sheetpage'}" style="--chart-size:${stg.vsize}px">${v==='tab'?'<div class="tspace"></div>':''}<span class="mmeasure" aria-hidden="true">0000000000</span>${P.html}${v==='tab'?'<div class="tend"></div>':''}</div>`;
+  stg.cap=0;
+  if(v==='sheet'&&P.html.includes('class="simg"')){
+    // keep text and drawings in the same proportion: if the drawings would be wider than the screen,
+    // shrink the text with them instead of squeezing only the drawings
+    const ch=$('st-body').querySelector('.chart'),w=ch.clientWidth;
+    stg.cap=Math.max(10,Math.floor(w/49));
+    if(stg.vsize>stg.cap){stg.vsize=stg.cap;ch.style.setProperty('--chart-size',stg.cap+'px');}
+  }
   if(v==='tab'){measureTab();tabDraw(tab.beat,tab.on);} else tab.tl=null;
 }
 
@@ -1252,7 +1262,7 @@ $('st-slower').onclick=()=>{if(stg.view==='tab')return nudgeBpm(-1);stg.speed=Ma
 $('st-faster').onclick=()=>{if(stg.view==='tab')return nudgeBpm(1);stg.speed=Math.min(15,stg.speed+1);updateSpeed();saveStg();};
 function resize(d){
   if(stg.view==='lyrics'){stg.size=Math.max(14,Math.min(56,stg.size+d));saveStg();drawChart();return;}
-  stg.vsize=Math.max(10,Math.min(48,stg.vsize+d));saveStg();drawChart();
+  stg.vsize=Math.max(10,Math.min(stg.view==='sheet'&&stg.cap?stg.cap:48,stg.vsize+d));saveStg();drawChart();
   if(stg.view==='tab'&&!tab.on)tabDraw(tab.beat,true);
 }
 $('st-smaller').onclick=()=>resize(-2);
