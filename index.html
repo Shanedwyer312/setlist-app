@@ -110,6 +110,16 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .stage{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr) auto auto auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .sbar,.sfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-bottom:1px solid var(--line)}
 .sfoot{border-bottom:0;border-top:1px solid var(--line)}
+.skey{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--accent);margin-left:12px;white-space:nowrap;letter-spacing:.02em}
+.spos .nx{text-transform:none;letter-spacing:0;font-size:13px;font-weight:500}
+.spos .nx b{color:var(--fg);font-weight:600}
+.spos .rt{color:var(--accent)}
+/* Sheet view: slimmer top bar, no bottom bar; swipe left/right on the page changes song */
+.stage.sheetv .sbar{padding-block:6px;row-gap:6px}
+.stage.sheetv .sinfo{gap:1px}
+.stage.sheetv .sfoot{display:none}
+.stage.sheetv .sbody{touch-action:pan-y pinch-zoom;-webkit-user-select:none;user-select:none}
+.stage.sheetv .sbody img{-webkit-user-drag:none;pointer-events:none}
 .sinfo{flex:1 1 220px;min-width:0;display:grid;gap:2px}
 .spos{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .stitle{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.05;text-transform:uppercase;letter-spacing:.01em}
@@ -477,7 +487,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
         <li>If a song has more than one page, switch between <b>Tab</b>, <b>Lyrics</b> and <b>Sheet</b> at the top.</li>
         <li><b>Lyrics:</b> <b>Scroll</b> starts auto-scroll. − / + next to it change the speed. Tap the lyrics to pause.</li>
         <li><b>Tab:</b> <b>Play</b> counts in, then scrolls in time. The line you're on stays a third of the way down the screen, and a cursor moves through each bar. − / + change the BPM. Tap the tab to pause, drag to any spot, and Play picks up from the bar at the cursor. With drums, Start runs the drums and the tab together. A page-turner jumps to the next or previous line while it's playing.</li>
-        <li><b>Sheet</b> stays put. Use A− / A+ to size it. If the sheet has a line with just <b>===</b>, it splits into screens: one flick (or a page-turner press) moves a whole screen.</li>
+        <li><b>Sheet</b> stays put. Use A− / A+ to size it. If the sheet has a line with just <b>===</b>, it splits into screens: one flick (or a page-turner press) moves a whole screen. On a sheet there's no bottom bar: <b>swipe left</b> for the next song and <b>swipe right</b> for the previous one. What's next shows at the top beside the song count.</li>
         <li><b>A− / A+</b> change the text size. Speed and size are remembered for each song.</li>
         <li><b>Next ›</b> shows what's next and warns you if you need to retune.</li>
         <li>A Bluetooth page-turner works too. Up/down scrolls, left/right changes song.</li>
@@ -673,7 +683,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.8.1';
+const APP_VERSION='1.9.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1067,20 +1077,26 @@ function renderStage(){
   stopScroll();stg.chordsOverride=null;
   const pref=s.stage||{};stg.speed=pref.speed||stg.defSpeed;stg.size=pref.size||stg.defSize;
   stg.view=startView(s);tab.beat=0;tab.done=false;
-  const notes=[s.dnote,s.notes].filter(x=>x&&x.trim()).join(' · ');
+  // Song notes like "Key: E · Vocal: JM · …": the key goes beside the title, the vocal tag is dropped
+  let key='';
+  const parts=[s.dnote,s.notes].filter(x=>x&&x.trim()).join(' · ').split(/\s+·\s+/).filter(p=>{
+    const t=p.trim();if(!t)return false;
+    if(/^vocals?\s*:/i.test(t))return false;
+    const m=t.match(/^key\s*:\s*(.+)$/i);if(m&&!key){key=m[1].trim();return false;}
+    return true;});
+  const notes=parts.join(' · ');
   $('st-notes').textContent=notes;$('st-notes').hidden=!notes;
   const n=stg.ids.length;
-  $('st-pos').textContent=n>1?`Song ${stg.i+1} of ${n}`:'Song';
-  $('st-title').textContent=s.title;
+  $('st-title').innerHTML=esc(s.title)+(key?`<span class="skey">Key ${esc(key)}</span>`:'');
   $('st-meta').innerHTML=metaHTML(s);
   $('st-body').scrollTop=0;
-  drawChart();
   const nx=song(stg.ids[stg.i+1]);
   if(nx){const a=tune(s.tuning),b=tune(nx.tuning);
     const rt=a.base!==b.base?` <span class="rt">· Retune to ${esc(b.base)}</span>`:(a.capo!==b.capo?` <span class="rt">· ${b.capo?'Capo '+b.capo:'Remove capo'}</span>`:'');
     $('st-next').innerHTML=`Next: <b>${esc(nx.title)}</b>${rt}`;
   } else $('st-next').textContent=n>1?'Last song':'';
   $('st-prev').disabled=stg.i===0;$('st-nextbtn').disabled=stg.i>=n-1;
+  drawChart();
   renderDrums();
   if(stg.lastOpened!==s.id){stg.lastOpened=s.id;songOpened(s);}
 }
@@ -1098,6 +1114,10 @@ function drawChart(){
   const s=song(stg.ids[stg.i]);if(!s)return;
   renderViewSeg(s);
   const v=stg.view;$('st-body').classList.remove('paged');
+  // Sheet view has no bottom bar, so "Next: …" (and any retune warning) moves up beside the song count
+  $('stage').classList.toggle('sheetv',v==='sheet');
+  const n=stg.ids.length,pos=n>1?`Song ${stg.i+1} of ${n}`:'Song';
+  $('st-pos').innerHTML=v==='sheet'&&n>1?`${pos} <span class="nx">· ${$('st-next').innerHTML}</span>`:pos;
   ['st-slower','st-scroll','st-speed','st-faster'].forEach(id=>$(id).hidden=v==='sheet');
   $('st-slower').setAttribute('aria-label',v==='tab'?'Slower (BPM)':'Scroll slower');
   $('st-faster').setAttribute('aria-label',v==='tab'?'Faster (BPM)':'Scroll faster');
@@ -1240,6 +1260,21 @@ $('st-bigger').onclick=()=>resize(2);
 $('st-chords').onclick=()=>{const s=song(stg.ids[stg.i]);stg.chordsOverride=!(stg.chordsOverride??(s.chords!==false));drawChart();};
 $('st-edit').onclick=()=>{stopScroll();openEditor(stg.ids[stg.i]);};
 $('st-body').addEventListener('pointerdown',()=>{if(stg.scrolling||tab.on||tab.timers.length)stopScroll();});
+// Sheet view: swipe left for the next song, right for the previous one (touch on the iPad, drag with a mouse elsewhere)
+const swipe={x:0,y:0,t:0,on:false};
+function swipeStart(x,y){if(stg.view!=='sheet')return;swipe.on=true;swipe.x=x;swipe.y=y;swipe.t=performance.now();}
+function swipeEnd(x,y){
+  if(!swipe.on||stg.view!=='sheet')return;swipe.on=false;
+  const dx=x-swipe.x,dy=y-swipe.y;
+  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.5||performance.now()-swipe.t>900)return;
+  if(dx<0){if(stg.i<stg.ids.length-1)$('st-nextbtn').click();else toast('Last song');}
+  else{if(stg.i>0)$('st-prev').click();else toast('First song');}
+}
+$('st-body').addEventListener('touchstart',e=>{if(e.touches.length===1)swipeStart(e.touches[0].clientX,e.touches[0].clientY);else swipe.on=false;},{passive:true});
+$('st-body').addEventListener('touchend',e=>{const t=e.changedTouches[0];if(t)swipeEnd(t.clientX,t.clientY);},{passive:true});
+$('st-body').addEventListener('touchcancel',()=>{swipe.on=false;},{passive:true});
+$('st-body').addEventListener('mousedown',e=>{if(e.button===0)swipeStart(e.clientX,e.clientY);});
+$('st-body').addEventListener('mouseup',e=>swipeEnd(e.clientX,e.clientY));
 document.addEventListener('keydown',e=>{
   if($('stage').hidden||!$('editor').hidden||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
   const b=$('st-body'),page=b.clientHeight*0.6;
