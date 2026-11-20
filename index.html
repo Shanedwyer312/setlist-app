@@ -158,8 +158,12 @@ li.setcard button{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px
 .tabv.sheetpage .spage{min-height:var(--pageh,80vh);scroll-snap-align:start;scroll-snap-stop:always}
 /* Tab page: plain lines are lyric cues, small and dim so the tab stays the focus */
 .tabv.tabpage .ll{font-family:var(--font-body);font-size:.7em;line-height:1.3;color:color-mix(in srgb,var(--fg) 72%,var(--bg));white-space:pre-wrap;margin-block:.1em}
-.tcur{position:absolute;left:0;top:0;bottom:0;width:3px;margin-left:-1px;border-radius:2px;background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 70%,transparent);pointer-events:none;will-change:transform}
-.tcur[data-pass]::after{content:attr(data-pass);position:absolute;left:7px;top:1px;font:600 12px var(--font-body);color:var(--accent);white-space:nowrap;background:var(--bg);padding:0 4px;border-radius:4px}
+/* Tab page follows loosely (you play with the band, not the app): the line you're about on gets a soft band and
+   a faint progress strip along its bottom edge, with a big "2 of 4" on repeats. No note-by-note cursor. */
+.tabv.tabpage .tsys.now{background:color-mix(in srgb,var(--accent) 13%,transparent);box-shadow:inset 4px 0 0 color-mix(in srgb,var(--accent) 75%,transparent)}
+.tabv.tabpage .tsys.nxt{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.tcur{position:absolute;left:0;bottom:0;height:3px;width:0;border-radius:2px;background:color-mix(in srgb,var(--accent) 55%,transparent);pointer-events:none}
+.tpass{position:absolute;right:6px;top:0;transform:translateY(-55%);z-index:1;font:700 18px var(--font-body);color:var(--accent);background:color-mix(in srgb,var(--bg) 85%,transparent);padding:1px 8px;border-radius:6px;pointer-events:none;white-space:nowrap}
 .mmeasure{position:absolute;top:0;left:0;visibility:hidden;white-space:pre;pointer-events:none}
 .sbar .seg button{min-height:40px;padding:8px 14px}
 .epane{display:grid;gap:12px}
@@ -490,7 +494,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
         <li>Tap <b>▶ Play set</b>, or tap any song in a setlist, to open it full screen.</li>
         <li>If a song has more than one page, switch between <b>Tab</b>, <b>Lyrics</b> and <b>Sheet</b> at the top.</li>
         <li><b>Lyrics:</b> <b>Scroll</b> starts auto-scroll. − / + next to it change the speed. Tap the lyrics to pause.</li>
-        <li><b>Tab:</b> <b>Play</b> counts in, then scrolls in time. The line you're on stays a third of the way down the screen, and a cursor moves through each bar. − / + change the BPM. Tap the tab to pause, drag to any spot, and Play picks up from the bar at the cursor. With drums, Start runs the drums and the tab together. A page-turner jumps to the next or previous line while it's playing.</li>
+        <li><b>Tab:</b> made for playing with a live band. Press <b>Play</b> on the drummer's first beat: it starts right away (no count-in) and drifts down at the song's BPM, keeping the line you're about on a third of the way down with a soft highlight, a faint strip showing roughly how far through it you are, and a big "2 of 4" on repeats. If the band is ahead or behind, just drag the page to where you really are and let go; it keeps scrolling from there. Tapping doesn't stop it; Pause does. − / + change the BPM if it keeps drifting. A page-turner jumps to the next or previous line. With drums, Start runs the drums and the tab together.</li>
         <li><b>Sheet</b> stays put. Use A− / A+ to size it. If the sheet has a line with just <b>===</b>, it splits into screens: one flick (or a page-turner press) moves a whole screen. On a sheet there's no bottom bar: <b>swipe left</b> for the next song and <b>swipe right</b> for the previous one. What's next shows at the top beside the song count.</li>
         <li><b>A− / A+</b> change the text size. Speed and size are remembered for each song.</li>
         <li><b>Next ›</b> shows what's next and warns you if you need to retune.</li>
@@ -687,7 +691,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.10.0';
+const APP_VERSION='1.11.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1189,25 +1193,37 @@ function tabDraw(beat,follow){
   const tl=tab.tl;if(!tl||!tl.sys.length)return;
   const {k,f}=tabAt(beat);const S=tl.sys,c=S[k],b=$('st-body');
   if(follow){const nt=k+1<S.length?S[k+1].top:c.top+c.h;const y=c.top+(nt-c.top)*f;tab.quietUntil=performance.now()+80;b.scrollTop=y-b.clientHeight/3;}
-  S.forEach((x,i)=>x.el.classList.toggle('now',i===k));
+  S.forEach((x,i)=>{x.el.classList.toggle('now',i===k);x.el.classList.toggle('nxt',i===k+1);});
   const pf=f*c.reps,pass=Math.min(c.reps-1,Math.floor(pf)),inner=f>=1?1:pf-Math.floor(pf);
   const bi=Math.min(c.bars-1,Math.floor(inner*c.bars)),bf=inner*c.bars-bi;
   const x=(c.cols[bi]+bf*(c.cols[bi+1]-c.cols[bi]))*(c.img?c.el.clientWidth:tab.cw);
+  const x0=c.cols[0]*(c.img?c.el.clientWidth:tab.cw);
   let cur=$('tcur');if(!cur||cur.parentNode!==c.el){if(cur)cur.remove();cur=document.createElement('div');cur.id='tcur';cur.className='tcur';c.el.appendChild(cur);}
-  cur.style.transform=`translateX(${x}px)`;
-  if(c.reps>1) cur.dataset.pass=(pass+1)+' of '+c.reps; else delete cur.dataset.pass;
+  cur.style.left=x0+'px';cur.style.width=Math.max(0,x-x0)+'px';
+  let pb=$('tpass');
+  if(c.reps>1){if(!pb||pb.parentNode!==c.el){if(pb)pb.remove();pb=document.createElement('div');pb.id='tpass';pb.className='tpass';c.el.appendChild(pb);}
+    const t=(pass+1)+' of '+c.reps;if(pb.textContent!==t)pb.textContent=t;}
+  else if(pb) pb.remove();
   const ch=c.el.closest('.tabv');
   if(ch&&ch.scrollWidth>ch.clientWidth){if(x<ch.scrollLeft+20||x>ch.scrollLeft+ch.clientWidth*0.8) ch.scrollLeft=Math.max(0,x-ch.clientWidth*0.25);}
 }
-function tabBeatFromScroll(){
-  measureTab();const tl=tab.tl;if(!tl||!tl.sys.length)return 0;
+// Where the reading spot (a third of the way down) sits, as a beat. Exact, so resuming or nudging never jumps.
+function tabBeatAtScroll(){
+  const tl=tab.tl;if(!tl||!tl.sys.length)return 0;
   const b=$('st-body');const y=b.scrollTop+b.clientHeight/3;const S=tl.sys;
   if(y<=S[0].top+1) return 0;
   let k=0;while(k<S.length-1&&y>=S[k+1].top)k++;
   const c=S[k],nt=k+1<S.length?S[k+1].top:c.top+c.h;
   const f=Math.min(0.999,Math.max(0,(y-c.top)/Math.max(1,nt-c.top)));
-  return c.start+Math.floor(f*c.beats/c.bpb)*c.bpb;   // back to the start of that bar
+  return c.start+f*c.beats;
 }
+function tabBeatFromScroll(){measureTab();return tabBeatAtScroll();}
+// Live nudging: while a finger (or mouse wheel) moves the page, the tab stops steering the scroll and takes its
+// position from wherever you put it; let go and it carries on from there at the song's tempo. Taps don't pause.
+const thold={touch:false,until:0};
+const tabHeld=()=>thold.touch||performance.now()<thold.until;
+function holdStart(){if(!tab.on)return;if(!thold.touch&&performance.now()>=thold.until)measureTab();thold.touch=true;}
+function holdEnd(){if(!thold.touch)return;thold.touch=false;thold.until=performance.now()+450;}
 function tabRun(from){
   stopScroll();measureTab();
   if(!tab.tl||!tab.tl.sys.length){startScroll();return;}
@@ -1216,9 +1232,9 @@ function tabRun(from){
   const step=t=>{
     if(!tab.on)return;
     const s=song(stg.ids[stg.i]);const bpm=(s&&effBpm(s))||0;
-    tab.beat+=Math.max(0,t-last)/1000*bpm/60;last=t;
-    if(tab.beat>=tab.tl.total){tab.beat=tab.tl.total;tabDraw(tab.beat,true);stopScroll();tab.done=true;return;}
-    tabDraw(tab.beat,true);tab.raf=requestAnimationFrame(step);
+    tab.beat+=Math.max(0,t-last)/1000*bpm/60;last=t;   // the song keeps going even while you hold the page
+    if(tab.beat>=tab.tl.total){tab.beat=tab.tl.total;if(!tabHeld())tabDraw(tab.beat,true);stopScroll();tab.done=true;return;}
+    tabDraw(tab.beat,!tabHeld());tab.raf=requestAnimationFrame(step);
   };
   tab.raf=requestAnimationFrame(step);
 }
@@ -1227,18 +1243,24 @@ function tabPlay(){
   if(!bpm){toast("Set this song's BPM first: Edit → Tempo & drums.");return;}
   measureTab();
   if(!tab.tl||!tab.tl.sys.length){toast('No tab lines found. Staff lines need | and dashes, like G|---3---|');return;}
+  // no count-in: press Play on the drummer's first beat and it starts moving right away
   const from=tab.done?0:tabBeatFromScroll();tab.done=false;tab.beat=from;tabDraw(from,true);
-  const beats=mcfg.count||0;
-  if(!beats){tabRun(from);return;}
-  const iv=60000/bpm;
-  for(let k=0;k<beats;k++) tab.timers.push(setTimeout(()=>{$('countnum').textContent=k+1;$('countin').hidden=false;},30+k*iv));
-  tab.timers.push(setTimeout(()=>{tab.timers=[];$('countin').hidden=true;tabRun(from);},30+beats*iv));
-  setPlayBtn();
+  tabRun(from);
 }
 $('st-body').addEventListener('scroll',()=>{
-  if(stg.view!=='tab'||tab.on||tab.timers.length||!tab.tl||performance.now()<tab.quietUntil)return;
+  if(stg.view!=='tab'||!tab.tl||performance.now()<tab.quietUntil)return;
+  if(tab.on){if(!tabHeld())return;
+    if(!thold.touch)thold.until=Math.max(thold.until,performance.now()+250);   // momentum after letting go
+    tab.beat=tabBeatAtScroll();tabDraw(tab.beat,false);return;}
+  if(tab.timers.length)return;
   tab.done=false;tab.beat=tabBeatFromScroll();tabDraw(tab.beat,false);
 },{passive:true});
+$('st-body').addEventListener('touchstart',holdStart,{passive:true});
+$('st-body').addEventListener('touchend',e=>{if(!e.touches.length)holdEnd();},{passive:true});
+$('st-body').addEventListener('touchcancel',holdEnd,{passive:true});
+$('st-body').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')holdStart();});
+window.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')holdEnd();});
+$('st-body').addEventListener('wheel',()=>{if(!tab.on)return;if(performance.now()>=thold.until&&!thold.touch)measureTab();thold.until=performance.now()+600;},{passive:true});
 let rzT=0;
 window.addEventListener('resize',()=>{if($('stage').hidden||stg.view==='lyrics')return;clearTimeout(rzT);rzT=setTimeout(()=>{drawChart();if(tab.on||stg.view!=='tab')return;tabDraw(tab.beat,true);},200);});
 
@@ -1256,7 +1278,7 @@ function setPlayBtn(){
 function startScroll(){stg.scrolling=true;setPlayBtn();scrollTick(performance.now());}
 function stopScroll(){
   stg.scrolling=false;stg.fixedPx=null;cancelAnimationFrame(stg.raf);
-  tab.on=false;cancelAnimationFrame(tab.raf);
+  tab.on=false;cancelAnimationFrame(tab.raf);thold.touch=false;thold.until=0;
   if(tab.timers.length){tab.timers.forEach(clearTimeout);tab.timers=[];$('countin').hidden=true;}
   setPlayBtn();
 }
@@ -1276,7 +1298,7 @@ $('st-smaller').onclick=()=>resize(-2);
 $('st-bigger').onclick=()=>resize(2);
 $('st-chords').onclick=()=>{const s=song(stg.ids[stg.i]);stg.chordsOverride=!(stg.chordsOverride??(s.chords!==false));drawChart();};
 $('st-edit').onclick=()=>{stopScroll();openEditor(stg.ids[stg.i]);};
-$('st-body').addEventListener('pointerdown',()=>{if(stg.scrolling||tab.on||tab.timers.length)stopScroll();});
+$('st-body').addEventListener('pointerdown',()=>{if(stg.view==='tab'&&(tab.on||tab.timers.length))return;if(stg.scrolling)stopScroll();});
 // Sheet view: swipe left for the next song, right for the previous one (touch on the iPad, drag with a mouse elsewhere)
 const swipe={x:0,y:0,t:0,on:false};
 function swipeStart(x,y){if(stg.view!=='sheet')return;swipe.on=true;swipe.x=x;swipe.y=y;swipe.t=performance.now();}
