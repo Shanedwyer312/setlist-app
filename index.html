@@ -309,7 +309,7 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       <div class="seg" role="group" aria-label="Chart" id="e-panes">
         <button type="button" data-ep="tab" data-label="Tab" aria-pressed="false">Tab</button>
         <button type="button" data-ep="lyrics" data-label="Lyrics" aria-pressed="true">Lyrics</button>
-        <button type="button" data-ep="sheet" data-label="Sheet" aria-pressed="false">Sheet</button>
+        <button type="button" data-ep="sheet" data-label="Chart" aria-pressed="false">Chart</button>
       </div>
       <div class="epane" data-pane="tab" hidden>
         <p class="hint">Plays in time with the song's BPM (set above). Put <b>|</b> between bars so the app knows how long each line lasts. Add <b>x2</b> after a line that repeats. Any other line shows as a small lyric cue, so put lyrics right above the staff they go with.</p>
@@ -325,10 +325,10 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
       </div>
       <div class="epane" data-pane="sheet" hidden>
         <p class="hint">A page that stays put: riffs, lyrics, reminders, or all three. Tab lines keep their spacing. A line with just === starts the next screen.</p>
-        <label class="f">Sheet<textarea id="e-sheet" spellcheck="false" autocapitalize="off" placeholder="[Main riff]&#10;G|----------------|&#10;D|----------------|&#10;A|----------------|&#10;E|3---3---3---3---|"></textarea></label>
+        <label class="f">Chart<textarea id="e-sheet" spellcheck="false" autocapitalize="off" placeholder="[Main riff]&#10;G|----------------|&#10;D|----------------|&#10;A|----------------|&#10;E|3---3---3---3---|"></textarea></label>
         <div class="actions"><button type="button" class="btn" data-staff="bass" data-into="e-sheet">Add bass staff</button><button type="button" class="btn" data-staff="gtr" data-into="e-sheet">Add guitar staff</button></div>
       </div>
-      <label class="f">Opens to<select id="e-view"><option value="">Automatic (Lyrics, else Tab, else Sheet)</option><option value="tab">Tab</option><option value="lyrics">Lyrics</option><option value="sheet">Sheet</option></select></label>
+      <label class="f">Opens to<select id="e-view"><option value="">Automatic (Lyrics, else Tab, else Chart)</option><option value="tab">Tab</option><option value="lyrics">Lyrics</option><option value="sheet">Chart</option></select></label>
     </fieldset>
     <label class="f">Notes<textarea id="e-notes"></textarea></label>
     <div class="actions">
@@ -476,9 +476,9 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
         <li><b>Charts</b> has three pages per song. Fill in any of them:
           <br><b>Tab</b> plays in time with the song's BPM. Put <b>|</b> between bars, since the app times each line by counting its bars. Add <b>x2</b> (or x3, x4) after a line that repeats. Any plain line shows as a small lyric cue, so put lyrics right above the staff they go with. Set <b>Beats per bar</b> if the song isn't in 4.
           <br><b>Lyrics</b>: paste lyrics, or a chord chart with chords on the line above the words. Turn off <b>Show chords on stage</b> for lyrics-only songs.
-          <br><b>Sheet</b> is a page that doesn't scroll, for riffs, lyrics or reminders.
+          <br><b>Chart</b> is a page that doesn't scroll, for riffs, lyrics or reminders.
           <br><b>Add bass staff</b> drops in four empty bars to type frets into. Lines like [Chorus] become section labels on every page.</li>
-        <li><b>Opens to</b> picks which page shows first on stage. Automatic opens Lyrics if there are any, then Tab, then Sheet.</li>
+        <li><b>Opens to</b> picks which page shows first on stage. Automatic opens Lyrics if there are any, then Tab, then Chart.</li>
         <li><b>Notes</b> show under the song title on stage (e.g. “capo off, Brian starts”).</li>
       </ul>
     </details>
@@ -494,10 +494,10 @@ legend{font-family:var(--font-display);font-size:16px;font-weight:600;text-trans
     <details><summary>On stage</summary>
       <ul>
         <li>Tap <b>▶ Play set</b>, or tap any song in a setlist, to open it full screen.</li>
-        <li>If a song has more than one page, switch between <b>Tab</b>, <b>Lyrics</b> and <b>Sheet</b> at the top.</li>
+        <li>If a song has more than one page, switch between <b>Tab</b>, <b>Lyrics</b> and <b>Chart</b> at the top.</li>
         <li><b>Lyrics:</b> <b>Scroll</b> starts auto-scroll. − / + next to it change the speed. Tap the lyrics to pause.</li>
         <li><b>Tab:</b> made for playing with a live band. Press <b>Play</b> on the drummer's first beat: it starts right away (no count-in) and drifts down at the song's BPM, keeping the line you're about on a third of the way down with a soft highlight, a faint strip showing roughly how far through it you are, and a big "2 of 4" on repeats. If the band is ahead or behind, just drag the page to where you really are and let go; it keeps scrolling from there. Tapping doesn't stop it; Pause does. − / + change the BPM if it keeps drifting. A page-turner jumps to the next or previous line. With drums, Start runs the drums and the tab together.</li>
-        <li><b>Sheet</b> stays put. Use A− / A+ to size it. If the sheet has a line with just <b>===</b>, it splits into screens: one flick (or a page-turner press) moves a whole screen. On a sheet there's no bottom bar: <b>swipe left</b> for the next song and <b>swipe right</b> for the previous one. What's next shows at the top beside the song count.</li>
+        <li><b>Chart</b> stays put. Use A− / A+ to size it. If the chart has a line with just <b>===</b>, it splits into screens: one flick (or a page-turner press) moves a whole screen. On a chart there's no bottom bar: <b>swipe left</b> for the next song and <b>swipe right</b> for the previous one. What's next shows at the top beside the song count.</li>
         <li><b>A− / A+</b> change the text size. Speed and size are remembered for each song.</li>
         <li><b>Next ›</b> shows what's next and warns you if you need to retune.</li>
         <li>A Bluetooth page-turner works too. Up/down scrolls, left/right changes song.</li>
@@ -693,7 +693,7 @@ function load(){
   }catch(e){}
   return seed();
 }
-const APP_VERSION='1.11.1';
+const APP_VERSION='1.12.0';
 const touch=o=>{if(o)o.u=Date.now();return o;};
 function normalize(d){
   if(d&&Array.isArray(d.order)&&!d.sets) d=migrate(d);
@@ -1002,7 +1002,7 @@ const saveStg=()=>{
 };
 
 /* Pages per song: Tab (plays in time), Lyrics (auto-scroll), Sheet (static) */
-const VIEWS=[['tab','Tab'],['lyrics','Lyrics'],['sheet','Sheet']];
+const VIEWS=[['tab','Tab'],['lyrics','Lyrics'],['sheet','Chart']];   // 'sheet' stays the data key; shown as Chart (Nov 20)
 const viewText=(s,v)=>String((v==='tab'?s.tab:v==='sheet'?s.sheet:s.chart)||'');
 const hasView=(s,v)=>/\S/.test(viewText(s,v));
 const songViews=s=>VIEWS.map(v=>v[0]).filter(v=>hasView(s,v));
@@ -1140,7 +1140,7 @@ function drawChart(){
   $('st-chords').hidden=true;
   if(!songViews(s).length){
     const q=encodeURIComponent((s.title+' '+s.artist).trim());
-    $('st-body').innerHTML=`<div class="snone"><p>Nothing on this song yet. Tap Edit to add a tab, lyrics or a sheet.</p>
+    $('st-body').innerHTML=`<div class="snone"><p>Nothing on this song yet. Tap Edit to add a tab, lyrics or a chart.</p>
       <div class="links"><a href="https://www.ultimate-guitar.com/search.php?search_type=title&value=${q}" target="_blank" rel="noopener">Find chords or tabs ↗</a><a href="https://www.google.com/search?q=${q}%20lyrics" target="_blank" rel="noopener">Find lyrics ↗</a></div></div>`;
     tab.tl=null;return;
   }
